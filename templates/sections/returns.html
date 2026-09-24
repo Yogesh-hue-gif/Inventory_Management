@@ -1,0 +1,138 @@
+<!-- VIEW 9: RETURNS (Matching project_IVM.pdf Page 12 & 13) -->
+<section id="view-returns" class="page-view">
+  <div style="margin-bottom: 16px;">
+    <h2 style="font-size: 20px; font-weight: 700;">Return Items</h2>
+    <p style="color: #6b7280; font-size: 13px;">Search a bill and process customer returns</p>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="card-box" style="margin-bottom: 16px; padding: 12px 16px; display: flex; gap: 10px; align-items: center;">
+    <span style="font-size: 12px; font-weight: 600; color: #374151;">📄 Bill Number</span>
+    <div style="flex: 1; max-width: 400px;">
+      <input type="text" id="return-bill-search-input" class="form-control" placeholder="e.g. BILL-2025-001">
+    </div>
+    <button onclick="searchReturnBill()" class="btn btn-primary" style="padding: 8px 16px;">
+      <i class="fa-solid fa-magnifying-glass"></i> Search Bill
+    </button>
+  </div>
+
+  <!-- Yellow Customer Bill Card -->
+  <div id="return-bill-info-card" style="display: none; background: #fef9c3; border: 1px solid #fde047; border-radius: var(--radius-md); padding: 12px 16px; margin-bottom: 16px; font-size: 12px; color: #854d0e;">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <div>
+        <span style="font-weight: 700; text-transform: uppercase;">BILL:</span> <span id="ret-info-billno" style="font-weight: 700;">INV-2026-041022915</span>
+        <span style="margin: 0 12px; color: #ca8a04;">|</span>
+        <span style="font-weight: 700; text-transform: uppercase;">CUSTOMER:</span> <span id="ret-info-cust">Walk-in Customer</span>
+      </div>
+      <div>
+        <span style="font-weight: 700; text-transform: uppercase;">BILL DATE:</span> <span id="ret-info-date">10 Apr 2026</span>
+        <span style="margin: 0 12px; color: #ca8a04;">|</span>
+        <span style="font-weight: 700; text-transform: uppercase;">BILL TOTAL:</span> <span id="ret-info-total" style="font-weight: 700;">Rs 10,080</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Container -->
+  <div class="card-box" style="padding: 0; overflow: hidden; margin-bottom: 16px;">
+    <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; display: flex; justify-content: space-between; align-items: center;">
+      <span style="font-weight: 700; font-size: 13px;">Items to Return</span>
+      <div style="display: flex; gap: 10px; font-size: 12px; align-items: center;">
+        <span id="ret-selected-cnt-badge" style="background: #2563eb; padding: 2px 8px; border-radius: 12px;">3 selected</span>
+        <span id="ret-selected-qty-badge" style="background: #2563eb; padding: 2px 8px; border-radius: 12px;">Qty: 17</span>
+        <button onclick="clearReturnSelection()" style="background: transparent; border: none; color: #fff; cursor: pointer; text-decoration: underline;">Clear All</button>
+      </div>
+    </div>
+    <div class="table-container" style="border: none; border-radius: 0;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;"><input type="checkbox" id="ret-select-all-chk" onchange="toggleAllReturnItems(this.checked)"></th>
+            <th>PRODUCT</th>
+            <th>SIZE</th>
+            <th>UNIT</th>
+            <th>QUANTITY</th>
+            <th>UNIT PRICE</th>
+            <th>LINE TOTAL</th>
+          </tr>
+        </thead>
+        <tbody id="return-items-body"></tbody>
+      </table>
+    </div>
+    <div style="background: #f8fafc; border-top: 1px solid #e2e8f0; padding: 12px 16px; display: flex; justify-content: flex-end; align-items: center; gap: 12px;">
+      <span style="font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase;">TOTAL REFUND AMOUNT (<span id="ret-total-items-text">3 items selected</span>):</span>
+      <span id="ret-total-refund-display" style="font-size: 16px; font-weight: 700; color: #047857;">Rs 10,080</span>
+    </div>
+  </div>
+
+  <!-- Bottom Grid: Return Reason & Refund Summary -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+    <!-- Return Reason Card -->
+    <div class="card-box">
+      <div class="card-header" style="margin-bottom: 12px; padding-bottom: 8px;">
+        <div class="card-title"><i class="fa-solid fa-circle-question" style="color: #2563eb;"></i> Return Reason</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reason *</label>
+        <select id="return-reason-select" class="form-control">
+          <option value="">-- Select a reason --</option>
+          <option value="Defective Product">Defective Product</option>
+          <option value="Wrong Item Received">Wrong Item Received</option>
+          <option value="Not as Described">Not as Described</option>
+          <option value="Changed Mind">Changed Mind</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes (default set hai, edit kar sakte ho)</label>
+        <textarea id="return-notes-input" class="form-control" rows="2" placeholder="No additional notes">No additional notes</textarea>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; margin-top: 10px;">
+        <input type="checkbox" id="return-restore-stock" checked style="accent-color: #2563eb;">
+        <label for="return-restore-stock" style="font-size: 13px; color: #374151;">Restore items to stock</label>
+      </div>
+    </div>
+
+    <!-- Refund Summary Card -->
+    <div class="card-box" style="display: flex; flex-direction: column; justify-content: space-between;">
+      <div>
+        <div class="card-header" style="margin-bottom: 12px; padding-bottom: 8px;">
+          <div class="card-title"><i class="fa-solid fa-dollar-sign" style="color: #10b981;"></i> Refund Summary</div>
+        </div>
+        <div style="font-size: 12px; line-height: 2; margin-bottom: 12px;">
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280;">Selected Items</span>
+            <strong id="ret-sum-selected">3</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280;">Total Qty</span>
+            <strong id="ret-sum-qty">17</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280;">Total Discount on Bill</span>
+            <strong>0%</strong>
+          </div>
+          <div style="display: flex; justify-content: space-between;">
+            <span style="color: #6b7280;">Calculated Refund</span>
+            <strong id="ret-sum-calc-refund">Rs 10,080</strong>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Adjusted Refund (editable)</label>
+          <div style="position: relative;">
+            <span style="position: absolute; left: 10px; top: 8px; color: #6b7280; font-size: 12px; font-weight: 600;">Rs</span>
+            <input type="number" id="return-adj-refund-input" class="form-control" style="padding-left: 32px;" value="10080">
+          </div>
+        </div>
+
+        <div id="return-reason-warning" style="background: #fff7ed; border: 1px solid #ffedd5; color: #c2410c; padding: 8px 12px; border-radius: 6px; font-size: 11px; margin-bottom: 12px;">
+          Return reason select karna zaroori hai — Return Reason section mein jakar select karo
+        </div>
+      </div>
+
+      <button onclick="submitProcessReturn()" class="btn btn-success" style="width: 100%; justify-content: center; padding: 10px; font-size: 14px;">
+        ✓ Process Return
+      </button>
+    </div>
+  </div>
+</section>

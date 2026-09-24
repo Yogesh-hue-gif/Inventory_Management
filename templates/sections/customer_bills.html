@@ -1,0 +1,153 @@
+<!-- VIEW 7: CUSTOMER BILLS (Matching project_IVM.pdf Page 15 & 16) -->
+<section id="view-customer-bills" class="page-view">
+  <!-- Main Customer Bills View -->
+  <div id="customer-bills-main-container">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+      <div>
+        <h2 style="font-size: 20px; font-weight: 700;">Customer Bills</h2>
+        <p style="color: #6b7280; font-size: 13px;">Track customer payments & outstanding balances</p>
+      </div>
+      <div>
+        <button onclick="loadCustomerBills()" class="btn btn-secondary">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+      </div>
+    </div>
+
+
+    <!-- 4 Stat Cards -->
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+      <div class="stat-card">
+        <div class="stat-label">TOTAL CUSTOMERS</div>
+        <div id="cust-tot-count" class="stat-val">5</div>
+        <div class="stat-icon-logo icon-blue"><i class="fa-solid fa-users"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL BILLED</div>
+        <div id="cust-tot-billed" class="stat-val">Rs 132,496</div>
+        <div class="stat-icon-logo icon-purple"><i class="fa-solid fa-dollar-sign"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL COLLECTED</div>
+        <div id="cust-tot-collected" class="stat-val" style="color: var(--accent-emerald);">Rs 119,856</div>
+        <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL OUTSTANDING</div>
+        <div id="cust-tot-outstanding" class="stat-val" style="color: var(--accent-rose);">Rs 12,640</div>
+        <div class="stat-icon-logo icon-rose"><i class="fa-solid fa-clock"></i></div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card-box" style="margin-bottom: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 600px;">
+        <div style="position: relative; flex: 1;">
+          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
+          <input type="text" onkeyup="filterCustomerBillsSearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search customer name...">
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button onclick="filterCustomerBillsTab('all')" class="preset-btn active">All</button>
+          <button onclick="filterCustomerBillsTab('cleared')" class="preset-btn">● Cleared</button>
+          <button onclick="filterCustomerBillsTab('outstanding')" class="preset-btn">● Outstanding</button>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #6b7280; font-weight: 600;" id="cust-bills-count-label">5 customers</div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>CUSTOMER</th>
+            <th>TOTAL BILLED</th>
+            <th>COLLECTED</th>
+            <th>OUTSTANDING</th>
+            <th>BILLS</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="customer-bills-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Customer Details Sub-View -->
+  <div id="customer-details-container" style="display: none;">
+    <div style="margin-bottom: 16px;">
+      <button onclick="hideCustomerDetails()" class="btn btn-secondary" style="margin-bottom: 8px;">
+        <i class="fa-solid fa-chevron-left"></i> All Customers
+      </button>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 36px; height: 36px; background: #2563eb; color: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700;" id="cust-det-avatar">W</div>
+        <div>
+          <h2 style="font-size: 18px; font-weight: 700;" id="cust-det-name">Walk-in Customer</h2>
+          <p style="color: #6b7280; font-size: 12px;">Bill history & payment details</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 Stat Cards for Customer -->
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+      <div class="stat-card">
+        <div class="stat-label">TOTAL BILLS</div>
+        <div id="cust-det-bills-cnt" class="stat-val">39</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL BILLED</div>
+        <div id="cust-det-billed" class="stat-val">Rs 58,633</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL COLLECTED</div>
+        <div id="cust-det-collected" class="stat-val" style="color: var(--accent-emerald);">Rs 58,634</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">OUTSTANDING</div>
+        <div id="cust-det-outstanding" class="stat-val" style="color: var(--accent-emerald);">Cleared</div>
+      </div>
+    </div>
+
+    <!-- Sub-Tabs: Bills | Payment History -->
+    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+      <button id="cust-tab-btn-bills" onclick="switchCustomerDetTab('bills')" class="btn btn-primary">Bills (39)</button>
+      <button id="cust-tab-btn-payments" onclick="switchCustomerDetTab('payments')" class="btn btn-secondary">Payment History (1)</button>
+    </div>
+
+    <div id="cust-det-tab-bills">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>BILL #</th>
+              <th>SALE DATE</th>
+              <th>TOTAL AMOUNT</th>
+              <th>AMOUNT PAID</th>
+              <th>REMAINING</th>
+              <th>PAYMENT STATUS</th>
+              <th>DETAILS</th>
+            </tr>
+          </thead>
+          <tbody id="cust-det-bills-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="cust-det-tab-payments" style="display: none;">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>DATE</th>
+              <th>BILL</th>
+              <th>AMOUNT</th>
+              <th>REMARKS</th>
+            </tr>
+          </thead>
+          <tbody id="cust-det-payments-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

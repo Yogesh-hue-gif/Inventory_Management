@@ -66,26 +66,31 @@ def api_dashboard_stats(request):
     total_bills = CustomerBill.objects.all()
     total_rev = total_bills.aggregate(s=Sum('net_total'))['s'] or Decimal('0.00')
 
-    # Outstanding receivables
+    # Outstanding receivables (Customer Dues)
     cust_billed = CustomerBill.objects.aggregate(s=Sum('net_total'))['s'] or Decimal('0.00')
     cust_paid = CustomerBill.objects.aggregate(s=Sum('amount_paid'))['s'] or Decimal('0.00')
     outstanding = cust_billed - cust_paid
 
+    # Pending unpaid customer bills count
+    pending_bills_cnt = CustomerBill.objects.filter(Q(status='Partial') | Q(status='Unpaid')).count()
+
     # Inventory Metrics
     all_variants = ProductVariant.objects.filter(is_active=True)
+    products_cnt = Product.objects.filter(is_active=True).count()
     total_inventory = all_variants.count()
     in_stock = sum(1 for v in all_variants if v.stock_quantity > v.reorder_level)
     low_stock = sum(1 for v in all_variants if 0 < v.stock_quantity <= v.reorder_level)
     out_of_stock = sum(1 for v in all_variants if v.stock_quantity <= 0)
     inventory_value = sum(v.stock_quantity * v.price_per_unit for v in all_variants)
 
-    # Supplier Metrics
+    # Supplier Metrics (Supplier Dues)
     supp_billed = PurchaseBatch.objects.aggregate(s=Sum('total_amount'))['s'] or Decimal('0.00')
     supp_paid = PurchaseBatch.objects.aggregate(s=Sum('paid_amount'))['s'] or Decimal('0.00')
-    pending_supplier_bills = supp_billed - supp_paid
+    supplier_dues = supp_billed - supp_paid
 
     suppliers_cnt = Supplier.objects.filter(is_active=True).count()
     customers_cnt = Customer.objects.filter(is_active=True).count()
+    quotations_cnt = Quotation.objects.filter(status='Draft').count()
 
     return JsonResponse({
         'today_revenue': float(today_rev),
@@ -96,47 +101,70 @@ def api_dashboard_stats(request):
         'month_bills_count': month_bills.count(),
         'total_revenue': float(total_rev),
         'outstanding': float(outstanding),
+        'pending_bills_count': pending_bills_cnt,
+        'products_count': products_cnt,
         'total_inventory': total_inventory,
         'in_stock': in_stock,
         'low_stock': low_stock,
         'out_of_stock': out_of_stock,
         'inventory_value': float(inventory_value),
-        'pending_supplier_bills': float(pending_supplier_bills),
+        'supplier_dues': float(supplier_dues),
         'suppliers_count': suppliers_cnt,
         'customers_count': customers_cnt,
-        'available_pct': round((in_stock / total_inventory * 100) if total_inventory else 94.0, 1)
+        'quotations_count': quotations_cnt,
+        'available_pct': round((in_stock / total_inventory * 100) if total_inventory else 0.0, 1)
     })
 
 def api_dashboard_charts(request):
     today = timezone.now().date()
     start_date = today - timedelta(days=29)
-    bills = CustomerBill.objects.filter(date__gte=start_date).order_by('date')
     
+    # Initialize full 30-day continuous timeline dictionary
     daily_sales = {}
     for i in range(30):
         d = start_date + timedelta(days=i)
-        daily_sales[d.strftime('%b %d')] = {'sales': 0.0, 'bills': 0}
+        daily_sales[d.strftime('%b %d')] = {'sales': Decimal('0.00'), 'bills': 0}
 
+    # Query customer bills within the 30-day range
+    bills = CustomerBill.objects.filter(date__gte=start_date, date__lte=today).order_by('date')
     for b in bills:
         key = b.date.strftime('%b %d')
         if key in daily_sales:
-            daily_sales[key]['sales'] += float(b.net_total)
+            daily_sales[key]['sales'] += b.net_total
             daily_sales[key]['bills'] += 1
 
+    labels = list(daily_sales.keys())
+    sales_list = [round(float(v['sales']), 2) for v in daily_sales.values()]
+    bills_list = [v['bills'] for v in daily_sales.values()]
+
+
     category_data = []
-    categories = Category.objects.filter(is_active=True)
-    for cat in categories:
-        items = CustomerBillItem.objects.filter(variant__product__category=cat)
-        tot = items.aggregate(s=Sum('line_total'))['s'] or Decimal('0.00')
-        category_data.append({'category': cat.name, 'sales': float(tot), 'items': items.count()})
+    categories = Category.objects.filter(is_active=True).order_by('order_num', 'id')
+    grand_cat_sales = Decimal('0.00')
     
-    if not any(c['sales'] > 0 for c in category_data):
-        category_data = [
-            {'category': 'Adhesives', 'sales': 78790.0, 'items': 54},
-            {'category': 'Other', 'sales': 6500.0, 'items': 8},
-            {'category': 'UPVC Pipes', 'sales': 5266.0, 'items': 13},
-            {'category': 'Pipe Fittings', 'sales': 120.0, 'items': 2},
-        ]
+    cat_sales_map = {}
+    for cat in categories:
+        bill_items = CustomerBillItem.objects.filter(variant__product__category=cat)
+        tot = bill_items.aggregate(s=Sum('line_total'))['s'] or Decimal('0.00')
+        variants_cnt = ProductVariant.objects.filter(product__category=cat).count()
+        cat_sales_map[cat.name] = {
+            'sales': tot,
+            'items': bill_items.count() if bill_items.count() > 0 else variants_cnt
+        }
+        grand_cat_sales += tot
+
+    for cat_name, data in cat_sales_map.items():
+        sales_val = float(data['sales'])
+        pct = round((float(data['sales']) / float(grand_cat_sales) * 100) if grand_cat_sales > 0 else 0.0, 1)
+        category_data.append({
+            'category': cat_name,
+            'sales': sales_val,
+            'items': data['items'],
+            'pct': f"{pct}%"
+        })
+
+    # Sort category data by sales descending, keeping categories with sales first
+    category_data.sort(key=lambda x: x['sales'], reverse=True)
 
     total_bills = CustomerBill.objects.count()
     paid_cnt = CustomerBill.objects.filter(status='Paid').count()
@@ -145,17 +173,20 @@ def api_dashboard_charts(request):
 
     return JsonResponse({
         'sales_trend': {
-            'labels': list(daily_sales.keys()),
-            'sales': [v['sales'] for v in daily_sales.values()],
-            'bills': [v['bills'] for v in daily_sales.values()],
+            'labels': labels,
+            'sales': sales_list,
+            'bills': bills_list,
         },
         'sales_by_category': category_data,
         'payment_methods': {
-            'paid_pct': round((paid_cnt / total_bills * 100) if total_bills else 33.4, 1),
-            'partial_pct': round((partial_cnt / total_bills * 100) if total_bills else 51.0, 1),
-            'refunded_pct': round((refunded_cnt / total_bills * 100) if total_bills else 15.6, 1),
+            'total_methods_count': total_bills,
+            'paid_pct': round((paid_cnt / total_bills * 100) if total_bills else 0.0, 1),
+            'partial_pct': round((partial_cnt / total_bills * 100) if total_bills else 0.0, 1),
+            'refunded_pct': round((refunded_cnt / total_bills * 100) if total_bills else 0.0, 1),
         }
     })
+
+
 
 def api_get_inventory(request):
     variants = ProductVariant.objects.select_related('product', 'product__category').all()
@@ -250,6 +281,105 @@ def api_add_variant(request):
             notes=notes
         )
         return JsonResponse({'status': 'success', 'variant_id': var.id})
+
+def api_get_product_details(request, prod_id):
+    try:
+        p = Product.objects.select_related('category').get(id=prod_id)
+        return JsonResponse({
+            'status': 'success',
+            'product': {
+                'id': p.id,
+                'name': p.name,
+                'category_id': p.category.id if p.category else None,
+                'category_name': p.category.name if p.category else '',
+                'description': p.description or '',
+                'is_active': p.is_active
+            }
+        })
+    except Product.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
+
+@csrf_exempt
+def api_update_product(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        prod_id = data.get('product_id')
+        name = data.get('name')
+        cat_id = data.get('category_id')
+        desc = data.get('description', '')
+        is_active = data.get('is_active', True)
+
+        try:
+            p = Product.objects.get(id=prod_id)
+            if name:
+                p.name = name
+            if cat_id:
+                p.category = Category.objects.get(id=cat_id)
+            p.description = desc
+            p.is_active = is_active
+            p.save()
+            return JsonResponse({'status': 'success', 'product_id': p.id, 'product_name': p.name})
+        except Product.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Product not found'}, status=404)
+
+def api_get_variant_details(request, var_id):
+    try:
+        v = ProductVariant.objects.select_related('product', 'product__category').get(id=var_id)
+        return JsonResponse({
+            'status': 'success',
+            'variant': {
+                'id': v.id,
+                'product_id': v.product.id,
+                'product_name': v.product.name,
+                'category_name': v.product.category.name if v.product.category else '',
+                'size': v.size,
+                'class_type': v.class_type or '',
+                'color': v.color or '',
+                'unit_of_measure': v.unit_of_measure,
+                'price_per_unit': float(v.price_per_unit),
+                'stock_quantity': float(v.stock_quantity),
+                'reorder_level': float(v.reorder_level),
+                'location': v.location or '',
+                'notes': v.notes or '',
+                'is_active': v.is_active
+            }
+        })
+    except ProductVariant.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Variant not found'}, status=404)
+
+@csrf_exempt
+def api_update_variant(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        var_id = data.get('variant_id')
+        try:
+            v = ProductVariant.objects.get(id=var_id)
+            if 'product_id' in data and data['product_id']:
+                v.product = Product.objects.get(id=data['product_id'])
+            if 'size' in data:
+                v.size = data['size']
+            if 'class_type' in data:
+                v.class_type = data['class_type']
+            if 'color' in data:
+                v.color = data['color']
+            if 'unit_of_measure' in data:
+                v.unit_of_measure = data['unit_of_measure']
+            if 'price_per_unit' in data:
+                v.price_per_unit = Decimal(str(data['price_per_unit']))
+            if 'stock_quantity' in data:
+                v.stock_quantity = Decimal(str(data['stock_quantity']))
+            if 'reorder_level' in data:
+                v.reorder_level = Decimal(str(data['reorder_level']))
+            if 'location' in data:
+                v.location = data['location']
+            if 'notes' in data:
+                v.notes = data['notes']
+            if 'is_active' in data:
+                v.is_active = data['is_active']
+            v.save()
+            return JsonResponse({'status': 'success', 'variant_id': v.id})
+        except ProductVariant.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Variant not found'}, status=404)
 
 def api_get_batches(request):
     batches = PurchaseBatch.objects.select_related('supplier').all().order_by('-id')
@@ -852,6 +982,7 @@ def api_get_suppliers(request):
             'contact': s.contact or '',
             'address': s.address or '',
             'status': 'Active' if s.is_active else 'Inactive',
+            'is_active': s.is_active,
             'created_at': s.created_at.strftime('%d %b %Y'),
             'notes': s.notes or ''
         })
@@ -869,6 +1000,36 @@ def api_add_supplier(request):
         s = Supplier.objects.create(name=name, contact=contact, address=address, notes=notes)
         return JsonResponse({'status': 'success', 'supplier_id': s.id})
 
+@csrf_exempt
+def api_update_supplier(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        s_id = data.get('supplier_id')
+        try:
+            s = Supplier.objects.get(id=s_id)
+            if 'name' in data: s.name = data['name']
+            if 'contact' in data: s.contact = data['contact']
+            if 'address' in data: s.address = data['address']
+            if 'notes' in data: s.notes = data['notes']
+            if 'is_active' in data: s.is_active = data['is_active']
+            s.save()
+            return JsonResponse({'status': 'success', 'supplier_id': s.id})
+        except Supplier.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Supplier not found'}, status=404)
+
+@csrf_exempt
+def api_delete_supplier(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        s_id = data.get('supplier_id')
+        try:
+            s = Supplier.objects.get(id=s_id)
+            s.is_active = False
+            s.save()
+            return JsonResponse({'status': 'success'})
+        except Supplier.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Supplier not found'}, status=404)
+
 def api_get_customers(request):
     customers = Customer.objects.all().order_by('-id')
     out = []
@@ -880,6 +1041,7 @@ def api_get_customers(request):
             'address': c.address or '',
             'type': c.customer_type,
             'status': 'Active' if c.is_active else 'Inactive',
+            'is_active': c.is_active,
             'created_at': c.created_at.strftime('%d %b %Y'),
             'notes': c.notes or ''
         })
@@ -898,6 +1060,37 @@ def api_add_customer(request):
         c = Customer.objects.create(name=name, phone=phone, address=address, customer_type=c_type, notes=notes)
         return JsonResponse({'status': 'success', 'customer_id': c.id})
 
+@csrf_exempt
+def api_update_customer(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        c_id = data.get('customer_id')
+        try:
+            c = Customer.objects.get(id=c_id)
+            if 'name' in data: c.name = data['name']
+            if 'phone' in data: c.phone = data['phone']
+            if 'address' in data: c.address = data['address']
+            if 'type' in data: c.customer_type = data['type']
+            if 'notes' in data: c.notes = data['notes']
+            if 'is_active' in data: c.is_active = data['is_active']
+            c.save()
+            return JsonResponse({'status': 'success', 'customer_id': c.id})
+        except Customer.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Customer not found'}, status=404)
+
+@csrf_exempt
+def api_delete_customer(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        c_id = data.get('customer_id')
+        try:
+            c = Customer.objects.get(id=c_id)
+            c.is_active = False
+            c.save()
+            return JsonResponse({'status': 'success'})
+        except Customer.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Customer not found'}, status=404)
+
 def api_get_staff(request):
     staff = StaffUser.objects.all().order_by('-id')
     out = []
@@ -910,6 +1103,7 @@ def api_get_staff(request):
             'contact': s.contact or '',
             'role': s.role,
             'status': 'Active' if s.is_active else 'Inactive',
+            'is_active': s.is_active,
             'hire_date': s.hire_date.strftime('%d %b %Y'),
             'last_login': s.last_login.strftime('%d %b %Y %H:%M') if s.last_login else 'Never'
         })
@@ -931,6 +1125,38 @@ def api_add_staff(request):
         )
         return JsonResponse({'status': 'success', 'staff_id': s.id})
 
+@csrf_exempt
+def api_update_staff(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        s_id = data.get('staff_id')
+        try:
+            s = StaffUser.objects.get(id=s_id)
+            if 'name' in data: s.name = data['name']
+            if 'username' in data: s.username = data['username']
+            if 'email' in data: s.email = data['email']
+            if 'contact' in data: s.contact = data['contact']
+            if 'role' in data: s.role = data['role']
+            if 'password' in data and data['password']: s.password = data['password']
+            if 'is_active' in data: s.is_active = data['is_active']
+            s.save()
+            return JsonResponse({'status': 'success', 'staff_id': s.id})
+        except StaffUser.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Staff member not found'}, status=404)
+
+@csrf_exempt
+def api_delete_staff(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        s_id = data.get('staff_id')
+        try:
+            s = StaffUser.objects.get(id=s_id)
+            s.is_active = False
+            s.save()
+            return JsonResponse({'status': 'success'})
+        except StaffUser.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Staff member not found'}, status=404)
+
 def api_get_categories(request):
     cats = Category.objects.all().order_by('order_num', 'name')
     out = []
@@ -941,6 +1167,7 @@ def api_get_categories(request):
             'order_num': c.order_num,
             'description': c.description or '',
             'status': 'Active' if c.is_active else 'Inactive',
+            'is_active': c.is_active,
             'created_at': c.created_at.strftime('%d %b %Y')
         })
     return JsonResponse({'categories': out})
@@ -955,6 +1182,35 @@ def api_add_category(request):
 
         c = Category.objects.create(name=name, order_num=order_num, description=description)
         return JsonResponse({'status': 'success', 'category_id': c.id})
+
+@csrf_exempt
+def api_update_category(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        c_id = data.get('category_id')
+        try:
+            c = Category.objects.get(id=c_id)
+            if 'name' in data: c.name = data['name']
+            if 'order_num' in data: c.order_num = int(data['order_num'])
+            if 'description' in data: c.description = data['description']
+            if 'is_active' in data: c.is_active = data['is_active']
+            c.save()
+            return JsonResponse({'status': 'success', 'category_id': c.id})
+        except Category.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Category not found'}, status=404)
+
+@csrf_exempt
+def api_delete_category(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        c_id = data.get('category_id')
+        try:
+            c = Category.objects.get(id=c_id)
+            c.is_active = False
+            c.save()
+            return JsonResponse({'status': 'success'})
+        except Category.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Category not found'}, status=404)
 
 def api_get_reorder_items(request):
     low_stock_variants = ProductVariant.objects.filter(is_active=True, stock_quantity__lte=F('reorder_level')).select_related('product')
@@ -971,3 +1227,4 @@ def api_get_reorder_items(request):
             'qty_to_order': float(max(v.reorder_level * 2 - v.stock_quantity, 10))
         })
     return JsonResponse({'items': out})
+

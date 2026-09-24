@@ -1,0 +1,236 @@
+<!-- VIEW 11: SETTINGS (Matching project_IVM.pdf Page 17 & 18) -->
+<section id="view-settings" class="page-view">
+
+  <!-- SUB-VIEW 1: STAFF MANAGEMENT -->
+  <div id="settings-tab-staff">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+      <div>
+        <h2 style="font-size: 20px; font-weight: 700;">Staff Management</h2>
+        <p style="color: #6b7280; font-size: 13px;">Manage your hardware store team members</p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="loadStaff()" class="btn btn-secondary">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+        <button onclick="openAddStaffModal()" class="btn btn-primary">
+          <i class="fa-solid fa-plus"></i> Add Staff
+        </button>
+      </div>
+    </div>
+
+    <!-- 4 Stat Cards -->
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+      <div class="stat-card">
+        <div class="stat-label">TOTAL STAFF</div>
+        <div id="staff-stat-total" class="stat-val">9</div>
+        <div class="stat-icon-logo icon-blue"><i class="fa-solid fa-users"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">ACTIVE</div>
+        <div id="staff-stat-active" class="stat-val" style="color: var(--accent-emerald);">9</div>
+        <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-circle-check"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">INACTIVE</div>
+        <div id="staff-stat-inactive" class="stat-val">0</div>
+        <div class="stat-icon-logo icon-rose"><i class="fa-solid fa-circle-xmark"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">ADMINS</div>
+        <div id="staff-stat-admins" class="stat-val" style="color: var(--accent-purple);">4</div>
+        <div class="stat-icon-logo icon-purple"><i class="fa-solid fa-shield-halved"></i></div>
+      </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="card-box" style="margin-bottom: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 16px; flex: 1; max-width: 600px;">
+        <div style="position: relative; flex: 1;">
+          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
+          <input type="text" onkeyup="filterStaffSearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search by name, email, role...">
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151;">
+          <input type="checkbox" id="staff-toggle-inactive" style="accent-color: #2563eb;">
+          <label for="staff-toggle-inactive">Show Inactive</label>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #6b7280; font-weight: 600;" id="staff-count-label">9 records</div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">#</th>
+            <th>STAFF MEMBER</th>
+            <th>ROLE</th>
+            <th>CONTACT</th>
+            <th>USERNAME</th>
+            <th>HIRE DATE</th>
+            <th>LAST LOGIN</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="staff-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SUB-VIEW 2: LOOKUP / CATEGORIES -->
+  <div id="settings-tab-categories" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+      <div>
+        <h2 style="font-size: 20px; font-weight: 700;">Lookup / Categories</h2>
+        <p style="color: #6b7280; font-size: 13px;">Manage product categories and lookup values</p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="loadCategories()" class="btn btn-secondary">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+        <button onclick="openAddCategoryModal()" class="btn btn-primary">
+          <i class="fa-solid fa-plus"></i> Add Category
+        </button>
+      </div>
+    </div>
+
+    <!-- 4 Stat Cards -->
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+      <div class="stat-card">
+        <div class="stat-label">TOTAL</div>
+        <div id="cat-stat-total" class="stat-val">11</div>
+        <div class="stat-icon-logo icon-blue"><i class="fa-solid fa-list-check"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">ACTIVE</div>
+        <div id="cat-stat-active" class="stat-val" style="color: var(--accent-emerald);">11</div>
+        <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-circle-check"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">INACTIVE</div>
+        <div id="cat-stat-inactive" class="stat-val">0</div>
+        <div class="stat-icon-logo icon-rose"><i class="fa-solid fa-circle-xmark"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">SHOWING</div>
+        <div id="cat-stat-showing" class="stat-val">11</div>
+        <div class="stat-icon-logo icon-purple"><i class="fa-solid fa-bars-staggered"></i></div>
+      </div>
+    </div>
+
+    <!-- Search & Filter Bar -->
+    <div class="card-box" style="margin-bottom: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 16px; flex: 1; max-width: 600px;">
+        <div style="position: relative; flex: 1;">
+          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
+          <input type="text" onkeyup="filterCategoriesSearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search by name or description...">
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151;">
+          <input type="checkbox" id="cat-toggle-inactive" style="accent-color: #2563eb;">
+          <label for="cat-toggle-inactive">Show Inactive</label>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #6b7280; font-weight: 600;" id="cat-count-label">11 entries</div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">#</th>
+            <th>CATEGORY</th>
+            <th>DESCRIPTION</th>
+            <th>ORDER</th>
+            <th>STATUS</th>
+            <th>CREATED</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="categories-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SUB-VIEW 3: REORDER MANAGEMENT -->
+  <div id="settings-tab-reorder" style="display: none;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+      <div>
+        <h2 style="font-size: 20px; font-weight: 700;">Reorder Management</h2>
+        <p style="color: #6b7280; font-size: 13px;">Select low-stock items and generate a supplier demand slip</p>
+      </div>
+      <div style="display: flex; gap: 10px;">
+        <button onclick="loadReorderItems()" class="btn btn-secondary">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+        <button onclick="generateReorderPDF()" class="btn btn-secondary">
+          <i class="fa-solid fa-file-pdf"></i> Generate PDF
+        </button>
+      </div>
+    </div>
+
+
+    <!-- 4 Stat Cards -->
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+      <div class="stat-card">
+        <div class="stat-label">TOTAL ISSUES</div>
+        <div id="reorder-stat-issues" class="stat-val" style="color: var(--accent-amber);">1</div>
+        <div class="stat-icon-logo icon-amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">LOW STOCK</div>
+        <div id="reorder-stat-low" class="stat-val">0</div>
+        <div class="stat-icon-logo icon-amber"><i class="fa-solid fa-chart-line"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">OUT OF STOCK</div>
+        <div id="reorder-stat-out" class="stat-val" style="color: var(--accent-rose);">1</div>
+        <div class="stat-icon-logo icon-rose"><i class="fa-solid fa-ban"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">SELECTED FOR ORDER</div>
+        <div id="reorder-stat-selected" class="stat-val" style="color: var(--accent-emerald);">0</div>
+        <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-check"></i></div>
+      </div>
+    </div>
+
+    <!-- Info Callout Banner -->
+    <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+      <i class="fa-solid fa-circle-info"></i>
+      <span>Check the items you want to reorder, set the required quantity for each, then click <strong>Generate PDF</strong> to produce a printable demand slip.</span>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card-box" style="margin-bottom: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 600px;">
+        <div style="display: flex; gap: 6px;">
+          <button class="preset-btn active">All Issues 1</button>
+          <button class="preset-btn">Low Stock 0</button>
+          <button class="preset-btn">Out of Stock 1</button>
+        </div>
+        <div style="position: relative; flex: 1;">
+          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
+          <input type="text" class="form-control" style="padding-left: 32px;" placeholder="Search product, supplier, size...">
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #6b7280; font-weight: 600;">1 item</div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;"><input type="checkbox" id="reorder-select-all"></th>
+            <th>PRODUCT / VARIANT</th>
+            <th>CURRENT STOCK</th>
+            <th>REORDER LVL</th>
+            <th>STATUS</th>
+            <th>QTY TO ORDER*</th>
+            <th>NOTES (optional)</th>
+          </tr>
+        </thead>
+        <tbody id="reorder-table-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</section>

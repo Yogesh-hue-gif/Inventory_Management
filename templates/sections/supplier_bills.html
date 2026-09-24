@@ -1,0 +1,162 @@
+<!-- VIEW 6: SUPPLIER BILLS (Matching project_IVM.pdf Page 13, 14, 15) -->
+<section id="view-supplier-bills" class="page-view">
+  <!-- Main Supplier Bills View -->
+  <div id="supplier-bills-main-container">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+      <div>
+        <h2 style="font-size: 20px; font-weight: 700;">Supplier Bills</h2>
+        <p style="color: #6b7280; font-size: 13px;">Track payments & outstanding balances</p>
+      </div>
+      <div>
+        <button onclick="loadSupplierBills()" class="btn btn-secondary">
+          <i class="fa-solid fa-arrows-rotate"></i> Refresh
+        </button>
+      </div>
+    </div>
+
+
+    <!-- 4 Stat Cards -->
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+      <div class="stat-card">
+        <div class="stat-label">TOTAL SUPPLIERS</div>
+        <div id="supp-tot-suppliers" class="stat-val">5</div>
+        <div class="stat-icon-logo icon-blue"><i class="fa-solid fa-users"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL BILLED</div>
+        <div id="supp-tot-billed" class="stat-val">Rs 190,072</div>
+        <div class="stat-icon-logo icon-purple"><i class="fa-solid fa-dollar-sign"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL PAID</div>
+        <div id="supp-tot-paid" class="stat-val" style="color: var(--accent-emerald);">Rs 117,224</div>
+        <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-check"></i></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL PENDING</div>
+        <div id="supp-tot-pending" class="stat-val" style="color: var(--accent-rose);">Rs 72,848</div>
+        <div class="stat-icon-logo icon-rose"><i class="fa-solid fa-clock"></i></div>
+      </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="card-box" style="margin-bottom: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 600px;">
+        <div style="position: relative; flex: 1;">
+          <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
+          <input type="text" onkeyup="filterSupplierBillsSearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search supplier name...">
+        </div>
+        <div style="display: flex; gap: 6px;">
+          <button onclick="filterSupplierBillsTab('all')" class="preset-btn active">All</button>
+          <button onclick="filterSupplierBillsTab('completed')" class="preset-btn">● Completed</button>
+          <button onclick="filterSupplierBillsTab('partial')" class="preset-btn">● Partial</button>
+          <button onclick="filterSupplierBillsTab('pending')" class="preset-btn">● Pending</button>
+        </div>
+      </div>
+      <div style="font-size: 12px; color: #6b7280; font-weight: 600;" id="supp-bills-count-label">5 suppliers</div>
+    </div>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>SUPPLIER</th>
+            <th>TOTAL BILLED</th>
+            <th>PAID</th>
+            <th>REMAINING</th>
+            <th>BATCHES</th>
+            <th>STATUS</th>
+            <th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="supplier-bills-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Supplier Details Sub-View -->
+  <div id="supplier-details-container" style="display: none;">
+    <div style="margin-bottom: 16px;">
+      <button onclick="hideSupplierDetails()" class="btn btn-secondary" style="margin-bottom: 8px;">
+        <i class="fa-solid fa-chevron-left"></i> All Suppliers
+      </button>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 36px; height: 36px; background: #2563eb; color: #fff; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700;" id="supp-det-avatar">D</div>
+        <div>
+          <h2 style="font-size: 18px; font-weight: 700;" id="supp-det-name">Diamond Fittings Co.</h2>
+          <p style="color: #6b7280; font-size: 12px;">Batch history & payment details</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4 Stat Cards for Supplier -->
+    <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+      <div class="stat-card">
+        <div class="stat-label">TOTAL BATCHES</div>
+        <div id="supp-det-batches-cnt" class="stat-val">4</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL BILLED</div>
+        <div id="supp-det-billed" class="stat-val">Rs 44,000</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">TOTAL PAID</div>
+        <div id="supp-det-paid" class="stat-val" style="color: var(--accent-emerald);">Rs 44,000</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">OUTSTANDING</div>
+        <div id="supp-det-outstanding" class="stat-val" style="color: var(--accent-emerald);">Cleared</div>
+      </div>
+    </div>
+
+    <!-- Sub-Tabs: Batches | Payment History -->
+    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+      <button id="supp-tab-btn-batches" onclick="switchSupplierDetTab('batches')" class="btn btn-primary">Batches (4)</button>
+      <button id="supp-tab-btn-payments" onclick="switchSupplierDetTab('payments')" class="btn btn-secondary">Payment History (6)</button>
+    </div>
+
+    <div id="supp-det-tab-batches">
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>BATCH NAME</th>
+              <th>DATE</th>
+              <th>TOTAL</th>
+              <th>PAID</th>
+              <th>REMAINING</th>
+              <th>STATUS</th>
+              <th>DETAILS</th>
+            </tr>
+          </thead>
+          <tbody id="supp-det-batches-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="supp-det-tab-payments" style="display: none;">
+      <div class="card-box" style="margin-bottom: 12px; padding: 10px 16px; display: flex; align-items: center; gap: 12px; font-size: 12px;">
+        <span style="font-weight: 700; color: #475569; text-transform: uppercase;">FILTER BY DATE:</span>
+        <button class="preset-btn active">All</button>
+        <button class="preset-btn">Today</button>
+        <button class="preset-btn">This Week</button>
+        <button class="preset-btn">This Month</button>
+        <button class="preset-btn">Custom Range</button>
+      </div>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>DATE</th>
+              <th>BATCH</th>
+              <th>AMOUNT</th>
+              <th>REMARKS</th>
+            </tr>
+          </thead>
+          <tbody id="supp-det-payments-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>

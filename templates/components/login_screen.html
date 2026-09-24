@@ -1,0 +1,62 @@
+<!-- LOGIN SCREEN OVERLAY (Matching project_IVM.pdf Page 1 Screenshot 1) -->
+<div id="login-screen" class="login-screen">
+  <div class="login-container">
+    <!-- Left Banner Panel -->
+    <div class="login-banner">
+      <div class="login-shop-icon">
+        <i class="fa-solid fa-store"></i>
+      </div>
+      <h1 class="login-shop-title">SHOP</h1>
+      <p class="login-shop-subtitle">Streamline Your Business Operations</p>
+      
+      <ul class="login-features">
+        <li>
+          <div class="feat-icon-box"><i class="fa-solid fa-boxes-stacked"></i></div>
+          <span>Inventory Management</span>
+        </li>
+        <li>
+          <div class="feat-icon-box"><i class="fa-solid fa-credit-card"></i></div>
+          <span>Point of Sale</span>
+        </li>
+        <li>
+          <div class="feat-icon-box"><i class="fa-solid fa-chart-column"></i></div>
+          <span>Real-time Analytics</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- Right Login Card Panel -->
+    <div class="login-card">
+      <div class="login-header">
+        <h1>Welcome Back</h1>
+        <p>Sign in to your account</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label">Tenant ID*</label>
+          <input type="text" id="login-tenant" class="form-control" value="SHOP" required placeholder="Tenant ID">
+          <div id="tenant-err-msg" style="color: #ef4444; font-size: 11px; margin-top: 3px; display: none;">Tenant ID is required</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Username*</label>
+          <input type="text" id="login-username" class="form-control" value="admin" required placeholder="Username">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password*</label>
+          <div style="position: relative;">
+            <input type="password" id="login-password" class="form-control" value="admin123" required placeholder="Password">
+            <button type="button" onclick="togglePasswordVisibility()" style="position: absolute; right: 10px; top: 10px; background: transparent; border: none; color: #9ca3af; cursor: pointer;">
+              <i id="pass-eye-icon" class="fa-solid fa-eye-slash"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 12px; padding: 10px; background: #3b82f6; font-size: 14px;">
+          <i class="fa-solid fa-right-to-bracket"></i> Sign In
+        </button>
+      </form>
+      <div style="margin-top: 24px; font-size: 11px; text-align: center; color: #94a3b8;">
+        Version: 1.8.0 • Powered by devco
+      </div>
+    </div>
+  </div>
+</div>

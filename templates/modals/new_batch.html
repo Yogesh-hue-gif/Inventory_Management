@@ -1,0 +1,209 @@
+<!-- MODAL: NEW BATCH (Matching image15.png & image17.png) -->
+<div id="modal-new-batch" class="modal-overlay">
+  <div class="modal-content" style="max-width: 960px; padding: 0; border-radius: 12px; overflow: hidden; background: #f8fafc;">
+    
+    <!-- Modal Top Bar -->
+    <div style="background: #ffffff; padding: 16px 24px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="width: 40px; height: 40px; background: #1e3a8a; color: #ffffff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700;">
+          <i class="fa-solid fa-plus"></i>
+        </div>
+        <div>
+          <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">New Purchase Batch</h3>
+          <p id="new-batch-id-tag" style="margin: 0; font-size: 12px; color: #64748b; font-weight: 600;">Batch ID: #Auto</p>
+        </div>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <button onclick="closeNewBatchModal()" class="btn" style="background: #e2e8f0; color: #334155; font-weight: 600; padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer;">Cancel</button>
+        <button onclick="submitSaveBatch()" class="btn btn-primary" style="background: #2563eb; color: #ffffff; font-weight: 600; padding: 8px 18px; border-radius: 6px; border: none; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+          <i class="fa-solid fa-floppy-disk"></i> Save Batch
+        </button>
+      </div>
+    </div>
+
+    <!-- Modal Body -->
+    <div class="modal-body" style="padding: 20px; max-height: calc(85vh - 70px); overflow-y: auto;">
+      
+      <!-- Top Grid: Batch Info & Payment Summary -->
+      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 16px;">
+        
+        <!-- Card 1: Batch Information -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+            <i class="fa-solid fa-file-lines" style="color: #64748b; font-size: 14px;"></i>
+            <h4 style="margin: 0; font-size: 13px; font-weight: 700; color: #0f172a;">Batch Information</h4>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Batch Name *</label>
+              <input type="text" id="batch-name-input" class="form-control" placeholder="e.g. July Import 2025" style="border-radius: 6px; font-size: 13px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Date *</label>
+              <input type="date" id="batch-date-input" class="form-control" style="border-radius: 6px; font-size: 13px;">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 4px;">Supplier *</label>
+                <button type="button" onclick="openAddSupplierModal()" style="font-size: 10px; color: #2563eb; background: none; border: none; cursor: pointer; text-decoration: underline; font-weight: 600;">+ Add</button>
+              </div>
+              <select id="batch-supplier-select" class="form-control" style="border-radius: 6px; font-size: 13px;">
+                <option value="">Search supplier...</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Status</label>
+              <select id="batch-status-select" class="form-control" style="border-radius: 6px; font-size: 13px;">
+                <option value="Completed">Completed</option>
+                <option value="Partial" selected>Partial</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Payment Summary -->
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 14px;">
+              <i class="fa-solid fa-dollar-sign" style="color: #64748b; font-size: 14px;"></i>
+              <h4 style="margin: 0; font-size: 13px; font-weight: 700; color: #0f172a;">Payment Summary</h4>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px;">
+              <span style="color: #64748b;">Total Amount</span>
+              <strong id="batch-summary-total" style="font-size: 16px; color: #0f172a; font-weight: 700;">0.00</strong>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px;">
+              <span style="color: #64748b;">Paid Amount</span>
+              <div style="display: flex; align-items: center; background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; width: 140px;">
+                <span style="padding: 4px 8px; font-size: 11px; color: #64748b; font-weight: 600; border-right: 1px solid #cbd5e1;">Rs</span>
+                <input type="number" id="batch-paid-input" onkeyup="updateBatchPaymentSummary()" onchange="updateBatchPaymentSummary()" value="0" step="0.01" style="width: 100%; border: none; background: transparent; padding: 4px 8px; text-align: right; font-weight: 700; outline: none; font-size: 13px;">
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 13px;">
+              <span style="color: #64748b;">Remaining</span>
+              <strong id="batch-summary-remaining" style="font-size: 15px; color: #10b981; font-weight: 700;">0.00</strong>
+            </div>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; font-weight: 600; margin-bottom: 2px;">
+              <span>0%</span>
+              <span id="batch-paid-pct-badge" style="color: #2563eb; font-weight: 700;">0% paid</span>
+              <span>100%</span>
+            </div>
+            <div style="height: 6px; width: 100%; background: #e2e8f0; border-radius: 3px; overflow: hidden;">
+              <div id="batch-paid-progress-fill" style="height: 100%; width: 0%; background: #10b981; transition: width 0.3s ease;"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Card 3: Add Product to Batch -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <i class="fa-solid fa-magnifying-glass" style="color: #64748b; font-size: 14px;"></i>
+          <h4 style="margin: 0; font-size: 13px; font-weight: 700; color: #0f172a;">Add Product to Batch</h4>
+        </div>
+
+        <div style="margin-bottom: 12px;">
+          <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Product / Variant Search *</label>
+          <div style="position: relative;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 11px; color: #94a3b8; font-size: 12px;"></i>
+            <select id="batch-variant-select" onchange="onBatchVariantSelectChange()" class="form-control" style="padding-left: 32px; border-radius: 6px; font-size: 13px;">
+              <option value="">Type product name...</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Size</label>
+            <input type="text" id="batch-size-input" class="form-control" placeholder="Auto-filled" readonly style="background: #f8fafc; color: #64748b; border-radius: 6px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Class</label>
+            <input type="text" id="batch-class-input" class="form-control" placeholder="Auto-filled" readonly style="background: #f8fafc; color: #64748b; border-radius: 6px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Sale Price</label>
+            <input type="number" id="batch-sale-input" class="form-control" value="0" step="0.01" style="border-radius: 6px; font-size: 13px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Quantity *</label>
+            <input type="number" id="batch-qty-input" onkeyup="onBatchQtyOrCostChange()" onchange="onBatchQtyOrCostChange()" class="form-control" value="0" min="1" step="1" style="border-radius: 6px; font-size: 13px;">
+          </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 10px; align-items: flex-end;">
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Cost Price *</label>
+            <input type="number" id="batch-cost-input" onkeyup="onBatchQtyOrCostChange()" onchange="onBatchQtyOrCostChange()" class="form-control" value="0" step="0.01" style="border-radius: 6px; font-size: 13px;">
+          </div>
+          <div class="form-group" style="margin-bottom: 0;">
+            <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Line Total</label>
+            <input type="text" id="batch-linetotal-input" class="form-control" value="0.00" readonly style="background: #eff6ff; color: #2563eb; font-weight: 700; border: 1px solid #bfdbfe; border-radius: 6px; font-size: 13px;">
+          </div>
+          <div>
+            <button type="button" onclick="addVariantToBatch()" class="btn" style="width: 100%; height: 38px; background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;" onmouseover="this.style.background='#2563eb'; this.style.color='#fff';" onmouseout="this.style.background='#f1f5f9'; this.style.color='#64748b';">
+              <i class="fa-solid fa-plus"></i> Add to Batch
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Card 4: Batch Items Table -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+        <div style="padding: 12px 16px; background: #ffffff; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-list-ul" style="color: #64748b; font-size: 14px;"></i>
+            <h4 style="margin: 0; font-size: 13px; font-weight: 700; color: #0f172a;">Batch Items</h4>
+          </div>
+          <div style="width: 22px; height: 22px; background: #2563eb; color: #ffffff; border-radius: 50%; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;" id="batch-items-badge-cnt">
+            0
+          </div>
+        </div>
+
+        <div class="table-container" style="max-height: 220px; overflow-y: auto;">
+          <table class="data-table" style="margin: 0;">
+            <thead>
+              <tr style="background: #335c7d; color: #ffffff;">
+                <th style="color: #ffffff; width: 40px;">#</th>
+                <th style="color: #ffffff;">PRODUCT</th>
+                <th style="color: #ffffff;">SIZE</th>
+                <th style="color: #ffffff;">CLASS</th>
+                <th style="color: #ffffff;">QTY</th>
+                <th style="color: #ffffff;">COST PRICE</th>
+                <th style="color: #ffffff;">SALE PRICE</th>
+                <th style="color: #ffffff;">LINE TOTAL</th>
+                <th style="color: #ffffff; text-align: center;">ACTION</th>
+              </tr>
+            </thead>
+            <tbody id="batch-items-body">
+              <tr>
+                <td colspan="9" style="text-align: center; color: #94a3b8; padding: 24px;">
+                  <div style="display: flex; flex-direction: column; align-items: center; gap: 6px;">
+                    <i class="fa-regular fa-folder-open" style="font-size: 28px; color: #cbd5e1;"></i>
+                    <span>No items added yet</span>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr style="background: #f8fafc; font-weight: 700;">
+                <td colspan="7" style="text-align: right; color: #475569;">GRAND TOTAL</td>
+                <td id="batch-table-grand-total" style="color: #0f172a; font-size: 14px;">0.00</td>
+                <td></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>

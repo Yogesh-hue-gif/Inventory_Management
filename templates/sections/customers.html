@@ -1,0 +1,75 @@
+<!-- VIEW 8: CUSTOMERS DIRECTORY (Matching project_IVM.pdf Page 18) -->
+<section id="view-customers" class="page-view">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+    <div>
+      <h2 style="font-size: 20px; font-weight: 700;">Customers</h2>
+      <p style="color: #6b7280; font-size: 13px;">Manage your customer database</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="loadCustomers()" class="btn btn-secondary">
+        <i class="fa-solid fa-arrows-rotate"></i> Refresh
+      </button>
+      <button onclick="openAddCustomerModal()" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Add Customer
+      </button>
+    </div>
+  </div>
+
+
+  <!-- 4 Stat Cards -->
+  <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+    <div class="stat-card">
+      <div class="stat-label">TOTAL CUSTOMERS</div>
+      <div id="cust-dir-total" class="stat-val">7</div>
+      <div class="stat-icon-logo icon-blue"><i class="fa-solid fa-users"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ACTIVE CUSTOMERS</div>
+      <div id="cust-dir-active" class="stat-val" style="color: var(--accent-emerald);">7</div>
+      <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-circle-check"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">INACTIVE CUSTOMERS</div>
+      <div id="cust-dir-inactive" class="stat-val">0</div>
+      <div class="stat-icon-logo icon-rose"><i class="fa-solid fa-circle-xmark"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">SHOWING</div>
+      <div id="cust-dir-showing" class="stat-val">7</div>
+      <div class="stat-icon-logo icon-purple"><i class="fa-solid fa-list"></i></div>
+    </div>
+  </div>
+
+  <!-- Search & Toggle Bar -->
+  <div class="card-box" style="margin-bottom: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 16px; flex: 1; max-width: 600px;">
+      <div style="position: relative; flex: 1;">
+        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
+        <input type="text" onkeyup="filterCustomersDirectorySearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search by name, phone or address...">
+      </div>
+      <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151;">
+        <input type="checkbox" id="cust-dir-toggle-inactive" style="accent-color: #2563eb;">
+        <label for="cust-dir-toggle-inactive">Show Inactive</label>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: #6b7280; font-weight: 600;" id="cust-dir-count-label">7 customers</div>
+  </div>
+
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>CUSTOMER</th>
+          <th>PHONE</th>
+          <th>ADDRESS</th>
+          <th>TYPE</th>
+          <th>STATUS</th>
+          <th>CREATED</th>
+          <th>NOTES</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody id="customers-directory-body"></tbody>
+    </table>
+  </div>
+</section>

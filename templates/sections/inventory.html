@@ -1,0 +1,89 @@
+<!-- VIEW 2: INVENTORY (Matching project_IVM.pdf Page 3) -->
+<section id="view-inventory" class="page-view">
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+    <div>
+      <h2 style="font-size: 20px; font-weight: 700;">Inventory</h2>
+      <p style="color: #6b7280; font-size: 13px;">Manage products, variants and stock levels</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button onclick="loadInventory(true)" class="btn btn-secondary">
+        <i class="fa-solid fa-arrows-rotate" id="inv-refresh-icon"></i> Refresh
+      </button>
+      <button onclick="openAddCategoryModal()" class="btn btn-secondary">
+        <i class="fa-solid fa-folder-plus"></i> Category
+      </button>
+      <button onclick="openAddVariantModal()" class="btn btn-secondary">
+        <i class="fa-solid fa-plus"></i> Add Variant
+      </button>
+      <button onclick="openAddProductModal()" class="btn btn-primary">
+        <i class="fa-solid fa-plus"></i> Add Product
+      </button>
+    </div>
+  </div>
+
+
+  <!-- 4 Summary Cards (With Low Stock & Out of Stock Linear Color Gradients) -->
+  <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+    <div class="stat-card" onclick="filterInventory('all')" style="cursor: pointer;">
+      <div class="stat-label">TOTAL ITEMS</div>
+      <div id="inv-total-cnt" class="stat-val">17</div>
+      <div class="stat-icon-logo icon-blue"><i class="fa-solid fa-cube"></i></div>
+    </div>
+    <div class="stat-card stat-card-low-stock" onclick="filterInventory('low')" style="cursor: pointer; background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%); border: 1px solid #fed7aa;">
+      <div class="stat-label" style="color: #c2410c;">LOW STOCK</div>
+      <div id="inv-low-cnt" class="stat-val" style="color: #c2410c;">0</div>
+      <div class="stat-sub" style="color: #9a3412; text-decoration: underline;">Click to filter</div>
+      <div class="stat-icon-logo icon-amber" style="background: #ffedd5; color: #c2410c;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    </div>
+    <div class="stat-card stat-card-out-stock" onclick="filterInventory('out')" style="cursor: pointer; background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%); border: 1px solid #fca5a5;">
+      <div class="stat-label" style="color: #dc2626;">OUT OF STOCK</div>
+      <div id="inv-out-cnt" class="stat-val" style="color: #dc2626;">1</div>
+      <div class="stat-sub" style="color: #991b1b; text-decoration: underline;">Click to filter</div>
+      <div class="stat-icon-logo icon-rose" style="background: #fee2e2; color: #dc2626;"><i class="fa-solid fa-ban"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">INVENTORY VALUE</div>
+      <div id="inv-val-cnt" class="stat-val" style="color: var(--accent-emerald);">Rs 562,184</div>
+      <div class="stat-sub" style="color: #6b7280;">Total valuation</div>
+      <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-dollar-sign"></i></div>
+    </div>
+  </div>
+
+  <!-- Search & Filter Bar (With Low Stock & Out of Stock Category Option Linear Gradients) -->
+  <div class="card-box" style="margin-bottom: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 600px;">
+      <div style="position: relative; flex: 1;">
+        <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
+        <input type="text" onkeyup="filterInventorySearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search product, supplier, size...">
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <button id="filter-pill-all" onclick="filterInventory('all')" class="preset-btn active" style="background: #2563eb; color: #fff; border-color: #2563eb;">All Items</button>
+        <button id="filter-pill-low" onclick="filterInventory('low')" class="preset-btn pill-low-stock">● Low Stock</button>
+        <button id="filter-pill-out" onclick="filterInventory('out')" class="preset-btn pill-out-stock">● Out of Stock</button>
+      </div>
+    </div>
+    <div style="font-size: 12px; color: #6b7280; font-weight: 600;" id="inv-item-count-label">17 items</div>
+  </div>
+
+
+  <!-- Data Table -->
+  <div class="table-container">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>PRODUCT</th>
+          <th>SIZE</th>
+          <th>CLASS</th>
+          <th>UNIT</th>
+          <th>PRICE/UNIT</th>
+          <th>STOCK</th>
+          <th>REORDER</th>
+          <th>STATUS</th>
+          <th>ACTIVE</th>
+          <th>ACTIONS</th>
+        </tr>
+      </thead>
+      <tbody id="inventory-table-body"></tbody>
+    </table>
+  </div>
+</section>

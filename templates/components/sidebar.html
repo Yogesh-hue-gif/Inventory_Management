@@ -1,0 +1,95 @@
+<!-- SIDEBAR NAVIGATION (Matching project_IVM.pdf) -->
+<aside class="sidebar" id="app-sidebar">
+  <div class="sidebar-header">
+    <div class="brand-logo">
+      <div class="brand-logo-icon">
+        <i class="fa-solid fa-cube"></i>
+      </div>
+      <span>DevInfantary POS</span>
+    </div>
+    <button class="sidebar-collapse-btn" id="btn-sidebar-toggle" title="Toggle Sidebar">
+      <i class="fa-solid fa-chevron-left" id="sidebar-toggle-icon"></i>
+    </button>
+  </div>
+  <ul class="nav-menu">
+    <li class="nav-item">
+      <a class="nav-link active" data-view="dashboard">
+        <i class="fa-solid fa-table-cells-large"></i> <span>Dashboard</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-view="inventory">
+        <i class="fa-solid fa-box-archive"></i> <span>Inventory</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-view="batches">
+        <i class="fa-solid fa-layer-group"></i> <span>Batches</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-view="pos">
+        <i class="fa-solid fa-cart-shopping"></i> <span>Sell Product</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-view="suppliers">
+        <i class="fa-solid fa-user-tie"></i> <span>Suppliers</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-view="supplier-bills">
+        <i class="fa-solid fa-file-lines"></i> <span>Supplier Bills</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-view="customer-bills">
+        <i class="fa-solid fa-comment-dollar"></i> <span>Customer Bills</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-view="customers">
+        <i class="fa-solid fa-users"></i> <span>Customers</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-view="returns">
+        <i class="fa-solid fa-rotate-left"></i> <span>Return Items</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-view="quotations">
+        <i class="fa-solid fa-file-circle-check"></i> <span>Quotations</span>
+      </a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" data-view="settings" id="nav-settings-parent">
+        <i class="fa-solid fa-gear"></i> <span>Settings</span> 
+        <i class="fa-solid fa-chevron-right" id="settings-arrow-icon" style="margin-left: auto; font-size: 11px; transition: transform 0.25s ease;"></i>
+      </a>
+      <ul class="nav-submenu" id="settings-submenu" style="display: none;">
+        <li>
+          <a class="nav-link" onclick="navigateSettingsTab('categories')">
+            <i class="fa-solid fa-magnifying-glass"></i> <span>Lookup</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="navigateSettingsTab('staff')">
+            <i class="fa-solid fa-user-gear"></i> <span>Staff</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" onclick="navigateSettingsTab('reorder')">
+            <i class="fa-solid fa-arrows-rotate"></i> <span>ReOrder</span>
+          </a>
+        </li>
+      </ul>
+    </li>
+  </ul>
+  <div class="sidebar-footer">
+    <button id="btn-logout" class="btn-logout">
+      <i class="fa-solid fa-right-from-bracket"></i> <span>Logout</span>
+    </button>
+  </div>
+</aside>
+

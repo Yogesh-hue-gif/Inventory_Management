@@ -1,0 +1,91 @@
+<!-- MODAL: ADD / EDIT / GET VARIANT -->
+<div id="modal-add-variant" class="modal-overlay">
+  <div class="modal-content" style="max-width: 680px;">
+    <div class="modal-header">
+      <h3 id="modal-variant-title"><i class="fa-solid fa-tags"></i> Add New Variant</h3>
+      <button onclick="closeAddVariantModal()" class="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="variant-id-hidden" value="">
+      <div class="form-group">
+        <label class="form-label">Product *</label>
+        <select id="variant-product-select" class="form-control" required>
+          <option value="">Select product</option>
+        </select>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div class="form-group">
+          <label class="form-label">Size *</label>
+          <input type="text" id="variant-size-input" class="form-control" placeholder="e.g. 1 inch, 2.5mm" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Class Type</label>
+          <input type="text" id="variant-class-input" class="form-control" placeholder="e.g. CLASS 'O', Heavy Duty">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Color (optional)</label>
+          <input type="text" id="variant-color-input" class="form-control" placeholder="e.g. White, Black, Silver">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Unit of Measure *</label>
+          <select id="variant-unit-select" class="form-control" required>
+            <option value="PCS">PCS</option>
+            <option value="FT">FT</option>
+            <option value="LENGTH">LENGTH</option>
+            <option value="MTR">MTR</option>
+            <option value="PACK">PACK</option>
+            <option value="UNIT">UNIT</option>
+            <option value="BOTTLE">BOTTLE</option>
+            <option value="BOX">BOX</option>
+            <option value="KG">KG</option>
+            <option value="LITER">LITER</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Price per Unit *</label>
+          <div style="position: relative;">
+            <span style="position: absolute; left: 10px; top: 8px; color: #6b7280; font-size: 12px;">Rs</span>
+            <input type="number" id="variant-price-input" class="form-control" style="padding-left: 32px;" value="0" step="0.01" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Price per Length (optional)</label>
+          <div style="position: relative;">
+            <span style="position: absolute; left: 10px; top: 8px; color: #6b7280; font-size: 12px;">Rs</span>
+            <input type="number" id="variant-length-price-input" class="form-control" style="padding-left: 32px;" value="0" step="0.01">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Length in unit / PCS (optional)</label>
+          <input type="text" id="variant-length-in-unit-input" class="form-control" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Stock Quantity *</label>
+          <input type="number" id="variant-stock-input" class="form-control" value="0" step="0.01" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reorder Level *</label>
+          <input type="number" id="variant-reorder-input" class="form-control" value="10" step="0.01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Location (optional)</label>
+          <input type="text" id="variant-location-input" class="form-control" placeholder="e.g. Shelf A-12">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Notes (optional)</label>
+        <textarea id="variant-notes-input" class="form-control" rows="2" placeholder="Additional notes..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeAddVariantModal()" class="btn btn-secondary">Cancel</button>
+      <button onclick="submitSaveVariant()" id="btn-save-variant" class="btn btn-primary">Save Variant</button>
+    </div>
+  </div>
+</div>

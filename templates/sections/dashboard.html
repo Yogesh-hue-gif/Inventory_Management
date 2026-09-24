@@ -1,0 +1,312 @@
+<!-- VIEW 1: DASHBOARD (Matching project_IVM.pdf Page 1 & 2) -->
+<section id="view-dashboard" class="page-view active">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+    <div>
+      <h2 style="font-size: 20px; font-weight: 700; color: #0f172a;">Dashboard</h2>
+    </div>
+    <div>
+      <button onclick="loadDashboard()" class="btn btn-secondary" style="display: inline-flex; align-items: center; gap: 6px;">
+        <i class="fa-solid fa-arrows-rotate"></i> Refresh
+      </button>
+    </div>
+  </div>
+
+
+  <!-- Row 1: 6 Top Stat Cards -->
+  <div class="stats-grid" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="stat-card">
+      <div class="stat-label">Today Revenue</div>
+      <div id="stat-today-rev" class="stat-val">Rs. 0</div>
+      <div id="stat-today-bills" class="stat-sub">0 bills today</div>
+      <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-coins"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Week Revenue</div>
+      <div id="stat-week-rev" class="stat-val">Rs. 0</div>
+      <div id="stat-week-bills" class="stat-sub">0 bills</div>
+      <div class="stat-icon-logo icon-purple"><i class="fa-solid fa-calendar-days"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Month Revenue</div>
+      <div id="stat-month-rev" class="stat-val">Rs. 0</div>
+      <div id="stat-month-bills" class="stat-sub">0 bills</div>
+      <div class="stat-icon-logo icon-cyan"><i class="fa-solid fa-calendar-check"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Revenue</div>
+      <div id="stat-total-rev" class="stat-val">Rs. 0</div>
+      <div class="stat-sub">All time</div>
+      <div class="stat-icon-logo icon-blue"><i class="fa-solid fa-infinity"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Customers</div>
+      <div id="stat-cust-cnt" class="stat-val">0</div>
+      <div class="stat-sub">Active customers</div>
+      <div class="stat-icon-logo icon-purple"><i class="fa-solid fa-user-group"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Outstanding</div>
+      <div id="stat-outstanding" class="stat-val" style="color: var(--accent-amber);">Rs. 0</div>
+      <div class="stat-sub">Receivables</div>
+      <div class="stat-icon-logo icon-amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    </div>
+  </div>
+
+  <!-- Row 2: 6 Middle Stat Cards -->
+  <div class="stats-grid" style="grid-template-columns: repeat(6, 1fr);">
+    <div class="stat-card">
+      <div class="stat-label">Pending Bills</div>
+      <div id="stat-pending-bills" class="stat-val" style="color: var(--accent-amber);">0</div>
+      <div class="stat-sub">Unpaid</div>
+      <div class="stat-icon-logo icon-amber"><i class="fa-solid fa-file-invoice"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Products</div>
+      <div id="stat-products-cnt" class="stat-val">0</div>
+      <div class="stat-sub">In catalog</div>
+      <div class="stat-icon-logo icon-cyan"><i class="fa-solid fa-boxes-stacked"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Low Stock</div>
+      <div id="stat-low-stock" class="stat-val" style="color: var(--accent-rose);">0</div>
+      <div class="stat-sub">Reorder soon</div>
+      <div class="stat-icon-logo icon-rose"><i class="fa-solid fa-fire"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Out of Stock</div>
+      <div id="stat-out-stock" class="stat-val" style="color: var(--accent-rose);">0</div>
+      <div class="stat-sub">Empty items</div>
+      <div class="stat-icon-logo icon-rose"><i class="fa-solid fa-xmark"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Stock Value</div>
+      <div id="stat-inventory-val" class="stat-val">Rs. 0</div>
+      <div class="stat-sub">Total Inventory</div>
+      <div class="stat-icon-logo icon-amber"><i class="fa-solid fa-heart"></i></div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Suppliers</div>
+      <div id="stat-suppliers-cnt" class="stat-val">0</div>
+      <div class="stat-sub">Active vendors</div>
+      <div class="stat-icon-logo icon-cyan"><i class="fa-solid fa-handshake"></i></div>
+    </div>
+  </div>
+
+  <!-- Row 3: 2 Bottom Stat Cards (Supplier Dues & Quotations) -->
+  <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr);">
+    <div class="stat-card" style="background: #e0f2fe; border-color: #bae6fd;">
+      <div class="stat-label" style="color: #0369a1;">Supplier Dues</div>
+      <div id="stat-supplier-dues" class="stat-val" style="color: #0284c7;">Rs. 0</div>
+      <div class="stat-sub" style="color: #0369a1;">To be paid</div>
+      <div class="stat-icon-logo icon-cyan" style="background: rgba(2, 132, 199, 0.15); color: #0284c7;"><i class="fa-solid fa-receipt"></i></div>
+    </div>
+    <div class="stat-card" style="background: #f3e8ff; border-color: #e9d5ff;">
+      <div class="stat-label" style="color: #6b21a8;">Quotations</div>
+      <div id="stat-quo-cnt" class="stat-val" style="color: #7c3aed;">0</div>
+      <div class="stat-sub" style="color: #6b21a8;">Pending draft</div>
+      <div class="stat-icon-logo icon-purple" style="background: rgba(124, 58, 237, 0.15); color: #7c3aed;"><i class="fa-solid fa-file-circle-check"></i></div>
+    </div>
+  </div>
+
+  <!-- Row A: SEPARATE Sales Trend Chart Card & SEPARATE Sales Trend Numerical Table Card -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+    <!-- Sales Trend Visual Chart Analysis Card -->
+    <div class="card-box" style="padding: 0; overflow: hidden;">
+      <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-chart-line"></i>
+          <span>Sales Trend</span>
+        </div>
+        <span style="font-weight: 400; opacity: 0.8; font-size: 11px;">Last 30 days revenue</span>
+      </div>
+      <div style="padding: 16px; height: 280px; position: relative;">
+        <canvas id="salesTrendChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Sales Trend Numerical Table Card -->
+    <div class="card-box" style="padding: 0; overflow: hidden;">
+      <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-table-list"></i>
+          <span>Sales Trend Data</span>
+        </div>
+        <span style="font-weight: 400; opacity: 0.8; font-size: 11px;">Numerical summary</span>
+      </div>
+      <div style="padding: 12px; height: 280px; overflow-y: auto;">
+        <table class="data-table" style="font-size: 12px;">
+          <thead>
+            <tr style="background: #f1f5f9; color: #475569;">
+              <th style="background: #f1f5f9; color: #475569;">Period</th>
+              <th style="background: #f1f5f9; color: #475569;">Sales</th>
+              <th style="background: #f1f5f9; color: #475569;">Bill Count</th>
+            </tr>
+          </thead>
+          <tbody id="sales-trend-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row B: SEPARATE Sales by Category Numerical Table & SEPARATE Sales by Category Progress Bars -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+    <!-- Sales by Category Numerical Summary Table Card -->
+    <div class="card-box" style="padding: 0; overflow: hidden;">
+      <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-list-check"></i>
+          <span>Sales by Category</span>
+        </div>
+        <span style="font-weight: 400; opacity: 0.8; font-size: 11px;">Numerical summary</span>
+      </div>
+      <div style="padding: 12px; height: 280px; overflow-y: auto;">
+        <table class="data-table">
+          <thead>
+            <tr style="background: #f1f5f9; color: #475569;">
+              <th style="background: #f1f5f9; color: #475569;">Category</th>
+              <th style="background: #f1f5f9; color: #475569;">Total Sales</th>
+              <th style="background: #f1f5f9; color: #475569;">Items</th>
+              <th style="background: #f1f5f9; color: #475569;">%</th>
+            </tr>
+          </thead>
+          <tbody id="category-sales-list"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Sales by Category Revenue Contribution Visual Bar Chart Progress Bars Card -->
+    <div class="card-box" style="padding: 0; overflow: hidden;">
+      <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <i class="fa-solid fa-chart-pie"></i>
+          <span>Sales by Category</span>
+        </div>
+        <span style="font-weight: 400; opacity: 0.8; font-size: 11px;">Revenue contribution</span>
+      </div>
+      <div style="padding: 16px; height: 280px; overflow-y: auto;">
+        <div id="category-sales-progress-bars" style="display: flex; flex-direction: column; gap: 14px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row C: Payment Methods & Inventory Health (with green/yellow/red stock variation line analysis) -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+    <!-- Payment Methods Breakdown Card -->
+    <div class="card-box" style="padding: 0; overflow: hidden;">
+      <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-wallet"></i>
+        <span>Payment Methods</span>
+        <span style="font-weight: 400; opacity: 0.8; font-size: 11px;">Collection breakdown</span>
+      </div>
+      <div style="padding: 20px; display: flex; justify-content: space-around; align-items: center;">
+        <div style="width: 130px; height: 130px; position: relative;">
+          <canvas id="paymentMethodsChart"></canvas>
+        </div>
+        <div style="font-size: 13px; line-height: 2;">
+          <div><span style="color: #f59e0b;">●</span> Partial: <strong id="pm-partial-pct">0%</strong></div>
+          <div><span style="color: #10b981;">●</span> Paid: <strong id="pm-paid-pct">0%</strong></div>
+          <div><span style="color: #ef4444;">●</span> Refunded: <strong id="pm-refunded-pct">0%</strong></div>
+          <div style="font-size: 11px; color: #6b7280; margin-top: 4px;" id="pm-total-methods-cnt">Total 0 bills</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inventory Health Card (with stock availability green/red line variation bar analysis) -->
+    <div class="card-box" style="padding: 0; overflow: hidden;">
+      <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-heart-pulse"></i>
+        <span>Inventory Health</span>
+        <span style="font-weight: 400; opacity: 0.8; font-size: 11px;">Stock status overview</span>
+      </div>
+      <div style="padding: 16px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; font-size: 12px; margin-bottom: 12px;">
+          <div><span style="color: #10b981;">●</span> In Stock <strong id="inv-health-instock" style="color: #10b981;">0</strong></div>
+          <div><span style="color: #f59e0b;">●</span> Low Stock <strong id="inv-health-lowstock" style="color: #f59e0b;">0</strong></div>
+          <div><span style="color: #ef4444;">●</span> Out of Stock <strong id="inv-health-outstock" style="color: #ef4444;">0</strong></div>
+        </div>
+
+        <!-- Stock Status Variation Line Bar Analysis -->
+        <div style="height: 10px; width: 100%; background: #e2e8f0; border-radius: 6px; overflow: hidden; display: flex; margin-bottom: 16px;">
+          <div id="inv-line-instock" style="height: 100%; width: 80%; background: #10b981; transition: width 0.3s;" title="In Stock"></div>
+          <div id="inv-line-lowstock" style="height: 100%; width: 10%; background: #f59e0b; transition: width 0.3s;" title="Low Stock"></div>
+          <div id="inv-line-outstock" style="height: 100%; width: 10%; background: #ef4444; transition: width 0.3s;" title="Out of Stock"></div>
+        </div>
+        
+        <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #e5e7eb; padding-top: 14px;">
+          <!-- Left: Stock Value -->
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="width: 38px; height: 38px; background: #e0f2fe; color: #0284c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+              <i class="fa-solid fa-vault"></i>
+            </div>
+            <div>
+              <div style="font-size: 15px; font-weight: 700; color: #2563eb;" id="inv-health-stock-val">Rs. 0</div>
+              <div style="font-size: 11px; color: #6b7280;">Stock Value</div>
+            </div>
+          </div>
+
+          <!-- Middle: Donut gauge -->
+          <div style="text-align: center;">
+            <div style="width: 54px; height: 54px; border-radius: 50%; border: 4px solid #10b981; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 14px; color: #10b981;" id="inv-health-avail-gauge">
+              0%
+            </div>
+            <div style="font-size: 10px; color: #6b7280; margin-top: 3px;">Available</div>
+          </div>
+
+          <!-- Right: Total Products -->
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="text-align: right;">
+              <div style="font-size: 15px; font-weight: 700; color: #111827;" id="inv-health-total-products">0</div>
+              <div style="font-size: 11px; color: #6b7280;">Total Products</div>
+            </div>
+            <div style="width: 38px; height: 38px; background: #f3e8ff; color: #7c3aed; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px;">
+              <i class="fa-solid fa-boxes-stacked"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row D: Revenue Summary Across Time Periods Card (with colored bottom indicator lines for each section) -->
+  <div class="card-box" style="padding: 0; overflow: hidden;">
+    <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px;">
+      <i class="fa-solid fa-chart-bar"></i>
+      <span>Revenue Summary</span>
+      <span style="font-weight: 400; opacity: 0.8; font-size: 11px;">Across time periods</span>
+    </div>
+    <div style="padding: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+      <!-- Today Card (Green Accent Line) -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #10b981; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="font-size: 11px; font-weight: 600; color: #64748b;">Today's Revenue</div>
+        <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;" id="rev-sum-today-val">Rs. 0</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="rev-sum-today-sub">0 bills</div>
+        <div class="stat-icon-logo icon-emerald" style="top: 12px; right: 12px; width: 32px; height: 32px;"><i class="fa-solid fa-coins"></i></div>
+      </div>
+
+      <!-- Week Card (Blue Accent Line) -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #3b82f6; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="font-size: 11px; font-weight: 600; color: #64748b;">Week Revenue</div>
+        <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;" id="rev-sum-week-val">Rs. 0</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="rev-sum-week-sub">0 bills</div>
+        <div class="stat-icon-logo icon-blue" style="top: 12px; right: 12px; width: 32px; height: 32px;"><i class="fa-solid fa-calendar-week"></i></div>
+      </div>
+
+      <!-- Month Card (Cyan Accent Line) -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #06b6d4; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="font-size: 11px; font-weight: 600; color: #64748b;">Month Revenue</div>
+        <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;" id="rev-sum-month-val">Rs. 0</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="rev-sum-month-sub">0 bills</div>
+        <div class="stat-icon-logo icon-cyan" style="top: 12px; right: 12px; width: 32px; height: 32px;"><i class="fa-solid fa-calendar-days"></i></div>
+      </div>
+
+      <!-- Total Card (Purple Accent Line) -->
+      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #a855f7; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+        <div style="font-size: 11px; font-weight: 600; color: #64748b;">Total Revenue</div>
+        <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;" id="rev-sum-total-val">Rs. 0</div>
+        <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="rev-sum-total-sub">All time</div>
+        <div class="stat-icon-logo icon-purple" style="top: 12px; right: 12px; width: 32px; height: 32px;"><i class="fa-solid fa-infinity"></i></div>
+      </div>
+    </div>
+  </div>
+
+</section>

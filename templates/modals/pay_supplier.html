@@ -1,0 +1,48 @@
+<!-- MODAL: PAY SUPPLIER (Matching project_IVM.pdf Page 14) -->
+<div id="modal-pay-supplier" class="modal-overlay">
+  <div class="modal-content" style="max-width: 520px;">
+    <div class="modal-header">
+      <h3><i class="fa-solid fa-credit-card"></i> Add Payment</h3>
+      <button onclick="closePaySupplierModal()" class="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <!-- Supplier info callout -->
+      <div style="background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 6px; padding: 12px 14px; margin-bottom: 16px; font-size: 12px; color: #0369a1;">
+        <div style="display: flex; justify-content: space-between; font-weight: 700;">
+          <span id="pay-supp-name">Diamond Fittings Co.</span>
+          <span id="pay-supp-batches">4 batch(es)</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; margin-top: 6px; color: #0284c7; font-size: 11px;">
+          <span>TOTAL: <strong id="pay-supp-total">Rs 44,000</strong></span>
+          <span>PAID: <strong id="pay-supp-paid">Rs 26,000</strong></span>
+          <span>REMAINING: <strong id="pay-supp-remaining" style="color: #dc2626;">Rs 18,000</strong></span>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Payment Amount *</label>
+        <div style="position: relative;">
+          <span style="position: absolute; left: 10px; top: 8px; color: #6b7280; font-size: 12px; font-weight: 600;">Rs</span>
+          <input type="number" id="pay-supp-amount-input" onkeyup="updatePaySuppRemainingCalc()" class="form-control" style="padding-left: 32px;" value="18000" required>
+        </div>
+        <div style="font-size: 11px; color: #10b981; margin-top: 4px;" id="pay-supp-calc-remaining">After payment: Rs 0 remaining</div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Remarks (optional)</label>
+        <input type="text" id="pay-supp-remarks-input" class="form-control" placeholder="e.g. Bank transfer">
+      </div>
+
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; color: #6b7280; margin-top: 10px;">
+        <span>Quick:</span>
+        <button type="button" onclick="setPaySuppAmountPreset('full')" class="preset-btn">Full Amount</button>
+        <button type="button" onclick="setPaySuppAmountPreset('50')" class="preset-btn">50%</button>
+        <button type="button" onclick="setPaySuppAmountPreset('25')" class="preset-btn">25%</button>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closePaySupplierModal()" class="btn btn-secondary">Cancel</button>
+      <button onclick="submitPaySupplier()" class="btn btn-success">✓ Submit Payment</button>
+    </div>
+  </div>
+</div>

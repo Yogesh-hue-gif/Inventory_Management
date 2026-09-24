@@ -1,0 +1,24 @@
+<!-- MODAL: PAY CUSTOMER -->
+<div id="modal-pay-customer" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="pay-customer-title">Receive Payment from Customer</h3>
+      <button onclick="closeCustomerPayModal()" style="background:none; border:none; color:var(--text-main); cursor:pointer;">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="pay-customer-id">
+      <div class="form-group">
+        <label class="form-label">Payment Amount (Rs.)</label>
+        <input type="number" id="pay-customer-amount" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Remarks</label>
+        <input type="text" id="pay-customer-remarks" class="form-control" placeholder="e.g. Cash, Bank transfer">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeCustomerPayModal()" class="btn btn-secondary">Cancel</button>
+      <button onclick="submitCustomerPayment()" class="btn btn-primary">Submit Payment</button>
+    </div>
+  </div>
+</div>

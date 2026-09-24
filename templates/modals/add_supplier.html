@@ -1,0 +1,29 @@
+<!-- MODAL: ADD SUPPLIER -->
+<div id="modal-add-supplier" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modal-supplier-title">Add Supplier</h3>
+      <button onclick="closeAddSupplierModal()" class="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="supplier-id-hidden" value="">
+      <div class="form-group">
+        <label class="form-label">Supplier Name *</label>
+        <input type="text" id="supp-name-input" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Contact Phone</label>
+        <input type="text" id="supp-contact-input" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Address</label>
+        <input type="text" id="supp-address-input" class="form-control">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeAddSupplierModal()" class="btn btn-secondary">Cancel</button>
+      <button onclick="submitSaveSupplier()" class="btn btn-primary">Save Supplier</button>
+    </div>
+  </div>
+</div>
+

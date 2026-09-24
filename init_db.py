@@ -228,27 +228,42 @@ if created and beson_v and glue_v:
     QuotationItem.objects.create(quotation=q, variant=beson_v, unit_price=Decimal('1000.00'), quantity=Decimal('9.00'), subtotal=Decimal('9000.00'))
     QuotationItem.objects.create(quotation=q, variant=glue_v, unit_price=Decimal('150.00'), quantity=Decimal('5.00'), subtotal=Decimal('750.00'))
 
-# Seed Initial Sample Invoice
-inv_num = "INV-2026-0410222915"
-bill, b_created = CustomerBill.objects.get_or_create(
-    bill_number=inv_num,
-    defaults={
-        'customer': cust_map['Walk-in Customer'],
-        'subtotal': Decimal('10080.00'),
-        'overall_discount': Decimal('0.00'),
-        'net_total': Decimal('10080.00'),
-        'amount_paid': Decimal('10080.00'),
-        'cash_received': Decimal('10080.00'),
-        'status': 'Paid',
-        'quotation_ref': q_num
-    }
-)
+# Seed Initial Sample Invoices relative to current date for proper 30-day Sales Trend timeline
+today = timezone.now().date()
+sample_bills_data = [
+    ('INV-2026-TREND-01', today - timedelta(days=24), Decimal('3000.00'), Decimal('3000.00'), 'Paid'),
+    ('INV-2026-TREND-02', today - timedelta(days=24), Decimal('2500.00'), Decimal('2500.00'), 'Paid'),
+    ('INV-2026-TREND-03', today - timedelta(days=24), Decimal('1262.00'), Decimal('1262.00'), 'Paid'),
+    ('INV-2026-TREND-04', today - timedelta(days=21), Decimal('800.00'), Decimal('800.00'), 'Paid'),
+    ('INV-2026-TREND-05', today - timedelta(days=21), Decimal('606.00'), Decimal('606.00'), 'Paid'),
+    ('INV-2026-TREND-06', today - timedelta(days=18), Decimal('700.00'), Decimal('700.00'), 'Paid'),
+    ('INV-2026-TREND-07', today - timedelta(days=18), Decimal('520.00'), Decimal('520.00'), 'Paid'),
+    ('INV-2026-TREND-08', today - timedelta(days=14), Decimal('78.00'), Decimal('78.00'), 'Paid'),
+    ('INV-2026-TREND-09', today - timedelta(days=10), Decimal('1350.00'), Decimal('1350.00'), 'Paid'),
+    ('INV-2026-TREND-10', today - timedelta(days=5),  Decimal('8880.00'), Decimal('8880.00'), 'Paid'),
+    ('INV-2026-TREND-11', today - timedelta(days=1),  Decimal('4208.00'), Decimal('4208.00'), 'Paid'),
+]
 
-if b_created and beson_v and glue_v:
-    zain_v = ProductVariant.objects.filter(product__name='zain ki product').first()
-    CustomerBillItem.objects.create(bill=bill, variant=beson_v, unit_price=Decimal('1000.00'), quantity=Decimal('9.00'), line_total=Decimal('9000.00'))
-    CustomerBillItem.objects.create(bill=bill, variant=glue_v, unit_price=Decimal('150.00'), quantity=Decimal('5.00'), line_total=Decimal('750.00'))
-    if zain_v:
-        CustomerBillItem.objects.create(bill=bill, variant=zain_v, unit_price=Decimal('110.00'), quantity=Decimal('3.00'), line_total=Decimal('330.00'))
+for b_num, b_date, net_tot, amt_paid, status in sample_bills_data:
+    bill, created = CustomerBill.objects.get_or_create(
+        bill_number=b_num,
+        defaults={
+            'customer': cust_map['Walk-in Customer'],
+            'subtotal': net_tot,
+            'overall_discount': Decimal('0.00'),
+            'net_total': net_tot,
+            'amount_paid': amt_paid,
+            'cash_received': net_tot,
+            'status': status,
+            'date': b_date
+        }
+    )
+    if created:
+        if 'beson' in locals() and beson_v:
+            CustomerBillItem.objects.create(bill=bill, variant=beson_v, unit_price=Decimal('1000.00'), quantity=Decimal('1.00'), line_total=Decimal('1000.00'))
+        if 'glue_v' in locals() and glue_v:
+            CustomerBillItem.objects.create(bill=bill, variant=glue_v, unit_price=Decimal('150.00'), quantity=Decimal('2.00'), line_total=Decimal('300.00'))
 
 print("Database initialization and seed complete!")
+
+

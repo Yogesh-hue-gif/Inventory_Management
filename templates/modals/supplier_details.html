@@ -1,0 +1,56 @@
+<!-- MODAL: SUPPLIER DETAILS -->
+<div id="modal-supplier-details" class="modal-overlay">
+  <div class="modal-content" style="max-width: 800px;">
+    <div class="modal-header">
+      <h3 id="supp-details-title">Supplier Details</h3>
+      <button onclick="closeSupplierDetailsModal()" style="background:none; border:none; color:var(--text-main); cursor:pointer;">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
+        <div class="stat-card">
+          <div class="stat-label">TOTAL BATCHES</div>
+          <div id="sd-tot-batches" class="stat-val">0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">TOTAL BILLED</div>
+          <div id="sd-tot-billed" class="stat-val">Rs. 0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">TOTAL PAID</div>
+          <div id="sd-tot-paid" class="stat-val" style="color: var(--accent-emerald);">Rs. 0</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">OUTSTANDING</div>
+          <div id="sd-outstanding" class="stat-val" style="color: var(--accent-rose);">Rs. 0</div>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+        <button onclick="filterSupplierDetailsDate('today')" class="btn btn-secondary">Today</button>
+        <button onclick="filterSupplierDetailsDate('week')" class="btn btn-secondary">This Week</button>
+        <button onclick="filterSupplierDetailsDate('month')" class="btn btn-secondary">This Month</button>
+        <button onclick="filterSupplierDetailsDate('all')" class="btn btn-secondary active">All</button>
+      </div>
+
+      <h4 style="margin-bottom: 8px;">Batches History</h4>
+      <div class="table-container" style="margin-bottom: 16px;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>BATCH NAME</th>
+              <th>DATE</th>
+              <th>TOTAL</th>
+              <th>PAID</th>
+              <th>REMAINING</th>
+              <th>STATUS</th>
+            </tr>
+          </thead>
+          <tbody id="sd-batches-body"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeSupplierDetailsModal()" class="btn btn-secondary">Close</button>
+    </div>
+  </div>
+</div>

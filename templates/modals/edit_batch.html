@@ -1,0 +1,32 @@
+<!-- MODAL: EDIT BATCH -->
+<div id="modal-edit-batch" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Edit Purchase Batch</h3>
+      <button onclick="closeEditBatchModal()" style="background:none; border:none; color:var(--text-main); cursor:pointer;">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-batch-id">
+      <div class="form-group">
+        <label class="form-label">Batch Name</label>
+        <input type="text" id="edit-batch-name" class="form-control" readonly>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Paid Amount (Rs.)</label>
+        <input type="number" id="edit-batch-paid" class="form-control">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Status</label>
+        <select id="edit-batch-status" class="form-control">
+          <option value="Completed">Completed</option>
+          <option value="Partial">Partial</option>
+          <option value="Pending">Pending</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeEditBatchModal()" class="btn btn-secondary">Cancel</button>
+      <button onclick="submitUpdateBatch()" class="btn btn-primary">Update Batch</button>
+    </div>
+  </div>
+</div>

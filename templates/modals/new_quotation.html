@@ -1,0 +1,172 @@
+<!-- MODAL: NEW QUOTATION (Matching image21.png & image22.png) -->
+<div id="modal-new-quotation" class="modal-overlay">
+  <div class="modal-content" style="max-width: 1100px; padding: 0; border-radius: 12px; overflow: hidden; background: #f8fafc;">
+    
+    <!-- Modal Container Split Grid -->
+    <div style="display: grid; grid-template-columns: 1fr 340px; min-height: 560px;">
+      
+      <!-- LEFT WORKSPACE (70%) -->
+      <div style="padding: 24px; display: flex; flex-direction: column; justify-content: space-between; background: #ffffff;">
+        <div>
+          <!-- Top Header -->
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div style="width: 40px; height: 40px; background: #0f172a; color: #ffffff; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px;">
+                <i class="fa-solid fa-file-invoice"></i>
+              </div>
+              <div>
+                <h3 style="margin: 0; font-size: 18px; font-weight: 700; color: #0f172a;">New Quotation</h3>
+                <p id="quo-modal-date-subtitle" style="margin: 0; font-size: 12px; color: #64748b;">April 10, 2026</p>
+              </div>
+            </div>
+            <button onclick="closeNewQuotationModal()" class="btn" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; font-weight: 600; padding: 6px 14px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px;">
+              <i class="fa-solid fa-arrow-left"></i> Back
+            </button>
+          </div>
+
+          <!-- Product Search Input -->
+          <div style="position: relative; margin-bottom: 20px;">
+            <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 13px; color: #94a3b8; font-size: 14px;"></i>
+            <select id="quo-product-search-select" onchange="addVariantToQuotation()" class="form-control" style="padding-left: 38px; height: 42px; font-size: 14px; border-radius: 8px; border: 1px solid #cbd5e1; width: 100%;">
+              <option value="">Search & add product...</option>
+            </select>
+          </div>
+
+          <!-- Quotation Items Table -->
+          <div style="border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; background: #ffffff;">
+            <div class="table-container" style="max-height: 340px; overflow-y: auto;">
+              <table class="data-table" style="margin: 0;">
+                <thead>
+                  <tr style="background: #0f172a; color: #ffffff;">
+                    <th style="color: #ffffff; width: 40px; text-align: center;"><input type="checkbox" checked style="accent-color: #2563eb;"></th>
+                    <th style="color: #ffffff;">PRODUCT</th>
+                    <th style="color: #ffffff; text-align: center;">UNIT PRICE</th>
+                    <th style="color: #ffffff; text-align: center;">QTY</th>
+                    <th style="color: #ffffff; text-align: right;">SUBTOTAL</th>
+                    <th style="color: #ffffff; text-align: center; width: 40px;"></th>
+                  </tr>
+                </thead>
+                <tbody id="quo-items-body">
+                  <tr>
+                    <td colspan="6" style="text-align: center; color: #94a3b8; padding: 40px;">
+                      <div style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-file-lines" style="font-size: 36px; color: #cbd5e1;"></i>
+                        <span style="font-weight: 600; color: #475569;">No items added</span>
+                        <span style="font-size: 12px; color: #94a3b8;">Search a product above to add items</span>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Table Footer Grand Total Row -->
+            <div style="background: #f8fafc; padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; align-items: center; gap: 16px;">
+              <span style="font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase;">GRAND TOTAL</span>
+              <strong id="quo-table-grand-total" style="font-size: 16px; color: #0f172a; font-weight: 700;">Rs 0</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT CONTROL PANEL (30% Dark Sidebar - Matching image21.png & image22.png) -->
+      <div style="background: #090d16; color: #ffffff; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; border-left: 1px solid #1e293b;">
+        <div>
+          
+          <!-- Section 1: Customer -->
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 10px;">
+              <i class="fa-regular fa-user" style="color: #38bdf8;"></i> CUSTOMER
+            </div>
+            
+            <div style="background: #131b2e; padding: 3px; border-radius: 6px; display: flex; margin-bottom: 10px; border: 1px solid #1e293b;">
+              <button type="button" id="quo-cust-btn-walkin" onclick="toggleQuotationCustomerType('walkin')" style="flex: 1; padding: 6px; background: #2563eb; color: #ffffff; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Walk-in</button>
+              <button type="button" id="quo-cust-btn-regular" onclick="toggleQuotationCustomerType('regular')" style="flex: 1; padding: 6px; background: transparent; color: #94a3b8; border: none; border-radius: 4px; font-size: 12px; font-weight: 600; cursor: pointer;">Regular</button>
+            </div>
+
+            <div id="quo-cust-walkin-box" style="background: #131b2e; border: 1px solid #1e293b; border-radius: 6px; padding: 8px 12px; font-size: 13px; color: #cbd5e1;">
+              <input type="text" id="quo-customer-input" value="Walk-in Customer" style="background: transparent; border: none; color: #ffffff; font-size: 13px; width: 100%; outline: none;">
+            </div>
+            <div id="quo-cust-regular-box" style="display: none;">
+              <select id="quo-customer-select" class="form-control" style="background: #131b2e; border: 1px solid #1e293b; color: #ffffff; border-radius: 6px; font-size: 13px; width: 100%;">
+                <option value="">Select customer...</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Section 2: Quotation Details -->
+          <div style="margin-bottom: 20px;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 8px;">
+              <i class="fa-regular fa-calendar" style="color: #38bdf8;"></i> QUOTATION DETAILS
+            </div>
+            <label style="font-size: 10px; color: #64748b; font-weight: 700; display: block; margin-bottom: 4px;">VALID UNTIL</label>
+            <input type="date" id="quo-valid-until-input" class="form-control" style="background: #131b2e; border: 1px solid #1e293b; color: #ffffff; border-radius: 6px; font-size: 13px; width: 100%;">
+          </div>
+
+          <!-- Section 3: Order Summary -->
+          <div style="margin-bottom: 20px; border-top: 1px solid #1e293b; padding-top: 16px;">
+            <div style="display: flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 700; color: #94a3b8; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 12px;">
+              <i class="fa-solid fa-dollar-sign" style="color: #38bdf8;"></i> ORDER SUMMARY
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; font-size: 13px; color: #cbd5e1; margin-bottom: 8px;">
+              <span>Items</span>
+              <span id="quo-summary-items-cnt" style="font-weight: 700; color: #ffffff;">0</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 13px; color: #cbd5e1; margin-bottom: 8px;">
+              <span>Total Qty</span>
+              <span id="quo-summary-qty-cnt" style="font-weight: 700; color: #ffffff;">0</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; font-size: 13px; color: #cbd5e1; margin-bottom: 12px;">
+              <span>Subtotal</span>
+              <strong id="quo-subtotal" style="color: #ffffff; font-size: 14px;">Rs 0</strong>
+            </div>
+
+            <div style="margin-bottom: 12px;">
+              <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #94a3b8; margin-bottom: 6px;">
+                <span>♡ Overall Discount</span>
+              </div>
+              <div style="display: flex; align-items: center; background: #131b2e; border: 1px solid #1e293b; border-radius: 6px; overflow: hidden; padding: 2px 8px; margin-bottom: 8px;">
+                <input type="number" id="quo-discount-input" onkeyup="renderQuotationCart()" onchange="renderQuotationCart()" value="0" min="0" style="background: transparent; border: none; color: #ffffff; font-size: 14px; font-weight: 700; width: 100%; outline: none;">
+                <span style="color: #64748b; font-size: 13px; font-weight: 700;">%</span>
+              </div>
+              <input type="range" id="quo-discount-slider" min="0" max="100" value="0" oninput="onQuotationSliderChange(this.value)" style="width: 100%; accent-color: #2563eb; cursor: pointer;">
+              <div style="display: flex; justify-content: space-between; font-size: 9px; color: #475569; margin-top: 2px;">
+                <span>0%</span>
+                <span>25%</span>
+                <span>50%</span>
+                <span>75%</span>
+                <span>100%</span>
+              </div>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 10px; border-top: 1px solid #1e293b;">
+              <span style="font-size: 14px; font-weight: 700; color: #ffffff;">Net Total</span>
+              <strong id="quo-net-total" style="font-size: 18px; color: #38bdf8; font-weight: 700;">Rs 0</strong>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Section 4: Action Buttons -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button type="button" onclick="closeNewQuotationModal()" style="width: 100%; padding: 10px; background: #1e293b; color: #cbd5e1; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            ✕ Cancel
+          </button>
+          
+          <button type="button" onclick="printCurrentQuotationDraft()" style="width: 100%; padding: 10px; background: #1e3a8a; color: #93c5fd; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-print"></i> Print Quotation
+          </button>
+
+          <button type="button" onclick="submitSaveQuotation()" style="width: 100%; padding: 11px; background: #10b981; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+            <i class="fa-solid fa-floppy-disk"></i> Save Quotation
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>

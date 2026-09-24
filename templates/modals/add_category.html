@@ -1,0 +1,29 @@
+<!-- MODAL: ADD CATEGORY -->
+<div id="modal-add-category" class="modal-overlay">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modal-category-title">Add Category</h3>
+      <button onclick="closeAddCategoryModal()" class="modal-close-btn">&times;</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="category-id-hidden" value="">
+      <div class="form-group">
+        <label class="form-label">Category Name *</label>
+        <input type="text" id="cat-name-input" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Order #</label>
+        <input type="number" id="cat-order-input" class="form-control" value="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Description</label>
+        <input type="text" id="cat-desc-input" class="form-control">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button onclick="closeAddCategoryModal()" class="btn btn-secondary">Cancel</button>
+      <button onclick="submitSaveCategory()" class="btn btn-primary">Save Category</button>
+    </div>
+  </div>
+</div>
+

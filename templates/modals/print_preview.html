@@ -1,0 +1,16 @@
+<!-- MODAL: PRINT PREVIEW SHEET -->
+<div id="modal-print-preview" class="modal-overlay">
+  <div class="modal-content" style="max-width: 700px; background: #fff; color: #000;">
+    <div class="modal-header" style="border-bottom: 1px solid #ccc; background: #f8fafc; color: #000;">
+      <h3 style="color: #000;"><i class="fa-solid fa-print"></i> Document Preview & Print</h3>
+      <button onclick="closePrintPreviewModal()" style="background:none; border:none; color:#000; cursor:pointer; font-size: 20px;">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div id="printable-receipt"></div>
+    </div>
+    <div class="modal-footer" style="border-top: 1px solid #ccc; background: #f8fafc;">
+      <button onclick="closePrintPreviewModal()" class="btn btn-secondary">Close</button>
+      <button onclick="printReceipt()" class="btn btn-primary"><i class="fa-solid fa-print"></i> Print Document</button>
+    </div>
+  </div>
+</div>
