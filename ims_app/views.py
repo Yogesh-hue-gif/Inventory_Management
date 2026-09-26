@@ -861,7 +861,10 @@ def api_pay_supplier_bill(request):
         return JsonResponse({'status': 'success', 'message': f'Payment of Rs. {amount} registered for {supplier.name}'})
 
 def api_supplier_details(request, supp_id):
-    supplier = Supplier.objects.get(id=supp_id)
+    try:
+        supplier = Supplier.objects.get(id=supp_id)
+    except Supplier.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Supplier not found'}, status=404)
     batches = supplier.batches.all().order_by('-id')
     payments = supplier.payments.all().order_by('-id')
 
@@ -978,7 +981,10 @@ def api_pay_customer_bill(request):
         return JsonResponse({'status': 'success', 'message': f'Received Rs. {amount} from {customer.name}'})
 
 def api_customer_details(request, cust_id):
-    customer = Customer.objects.get(id=cust_id)
+    try:
+        customer = Customer.objects.get(id=cust_id)
+    except Customer.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Customer not found'}, status=404)
     bills = customer.bills.all().order_by('-id')
     
     b_list = []
