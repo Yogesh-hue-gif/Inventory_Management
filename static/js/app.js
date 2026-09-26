@@ -70,6 +70,31 @@ function setupEventListeners() {
     });
   });
 
+  // Dashboard stat cards open a drill-down of the records behind the amount
+  const dashboardView = document.getElementById('view-dashboard');
+  if (dashboardView) {
+    dashboardView.addEventListener('click', (e) => {
+      const tile = e.target.closest('[data-metric]');
+      if (tile) openDashboardDrilldown(tile.getAttribute('data-metric'));
+    });
+    // Keyboard users get the same drill-down
+    dashboardView.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter' && e.key !== ' ' && e.key !== 'Spacebar') return;
+      const tile = e.target.closest('[data-metric]');
+      if (!tile) return;
+      e.preventDefault();
+      openDashboardDrilldown(tile.getAttribute('data-metric'));
+    });
+  }
+
+  // Clicking the dimmed backdrop closes the drill-down
+  const drilldownModal = document.getElementById('modal-dashboard-drilldown');
+  if (drilldownModal) {
+    drilldownModal.addEventListener('click', (e) => {
+      if (e.target === drilldownModal) closeDashboardDrilldown();
+    });
+  }
+
   // Any sidebar link (including the Settings sub-menu) closes the mobile drawer
   const navMenu = document.querySelector('.nav-menu');
   if (navMenu) {
@@ -722,6 +747,91 @@ function renderPaymentMethodsChart(pmData) {
   });
 }
 
+
+/* =========================================================
+   1b. DASHBOARD STAT DRILL-DOWN
+   Clicking a revenue / receivable card lists the individual
+   records (bills, or customers) that make up the amount.
+========================================================= */
+async function openDashboardDrilldown(metric) {
+  if (!metric) return;
+  const modal = document.getElementById('modal-dashboard-drilldown');
+  const tbody = document.getElementById('drilldown-body');
+  if (!modal || !tbody) return;
+
+  const titleEl = document.getElementById('drilldown-title');
+  const subEl = document.getElementById('drilldown-subtitle');
+  if (titleEl) titleEl.textContent = 'Loading...';
+  if (subEl) subEl.textContent = '';
+  tbody.innerHTML = '<tr><td colspan="6" class="drilldown-empty">Loading records...</td></tr>';
+  modal.classList.add('active');
+
+  try {
+    const res = await fetch('/api/dashboard/drilldown/?metric=' + encodeURIComponent(metric));
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Could not load the breakdown');
+    renderDashboardDrilldown(data);
+  } catch (err) {
+    console.error('Dashboard drill-down failed:', err);
+    tbody.innerHTML = '<tr><td colspan="6" class="drilldown-empty">' + escapeSettingsHtml(err.message) + '</td></tr>';
+  }
+}
+
+function closeDashboardDrilldown() {
+  const modal = document.getElementById('modal-dashboard-drilldown');
+  if (modal) modal.classList.remove('active');
+}
+
+function drilldownStatusBadge(status) {
+  const map = {
+    'Paid': 'badge-success', 'Partial': 'badge-warning',
+    'Refunded': 'badge-danger', 'Active': 'badge-success'
+  };
+  return '<span class="badge ' + (map[status] || 'badge-secondary') + '">' + escapeSettingsHtml(status) + '</span>';
+}
+
+function renderDashboardDrilldown(data) {
+  const tbody = document.getElementById('drilldown-body');
+  if (!tbody) return;
+
+  const rows = data.rows || [];
+  const titleEl = document.getElementById('drilldown-title');
+  const subEl = document.getElementById('drilldown-subtitle');
+  const countEl = document.getElementById('drilldown-count');
+  const totalEl = document.getElementById('drilldown-total');
+  const totalLabelEl = document.getElementById('drilldown-total-label');
+  const headEl = document.querySelector('#modal-dashboard-drilldown th.drilldown-num');
+
+  if (titleEl) titleEl.textContent = data.title || 'Breakdown';
+  if (subEl) subEl.textContent = data.subtitle || '';
+  if (headEl) headEl.textContent = data.amount_label || 'Amount';
+  if (totalLabelEl) totalLabelEl.textContent = data.amount_label || 'Total';
+  if (totalEl) totalEl.textContent = 'Rs. ' + Number(data.total_amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+
+  const count = Number(data.count || 0);
+  const shown = Number(data.shown || rows.length);
+  if (countEl) {
+    const noun = count === 1 ? 'record' : 'records';
+    countEl.textContent = shown < count
+      ? 'Showing ' + shown + ' of ' + count + ' ' + noun
+      : count + ' ' + noun;
+  }
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="drilldown-empty">No records contribute to this amount yet</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(row => `
+    <tr>
+      <td style="font-weight: 700; color: #0f172a;">${escapeSettingsHtml(row.ref)}</td>
+      <td style="color: #64748b; white-space: nowrap;">${escapeSettingsHtml(row.date)}</td>
+      <td>${escapeSettingsHtml(row.party)}</td>
+      <td style="color: #64748b;">${escapeSettingsHtml(row.detail)}</td>
+      <td class="drilldown-num" style="font-weight: 700; color: #0f172a;">Rs ${Number(row.amount || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+      <td>${drilldownStatusBadge(row.status)}</td>
+    </tr>`).join('');
+}
 
 /* =========================================================
    2. INVENTORY VIEW (Matching project_IVM.pdf Page 3)
@@ -1656,7 +1766,7 @@ function selectQuotationPreview(q) {
   detailBox.innerHTML = `
     <div style="width: 100%;">
       <!-- Card Header -->
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 16px;">
+      <div class="quo-detail-head" style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #e2e8f0; padding-bottom: 14px; margin-bottom: 16px;">
         <div>
           <div style="display: flex; align-items: center; gap: 8px;">
             <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin: 0;">${q.quotation_number}</h3>
@@ -1666,8 +1776,14 @@ function selectQuotationPreview(q) {
             Created: <strong>${q.date}</strong> | Valid Until: <strong>${q.valid_until}</strong>
           </p>
         </div>
-        <div style="display: flex; gap: 8px;">
-          <button onclick="printQuotationByNumber('${q.quotation_number}')" class="btn" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+        <div class="quo-detail-actions">
+          <button onclick="previewQuotationByNumber('${q.quotation_number}')" class="btn" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <i class="fa-solid fa-eye"></i> Preview
+          </button>
+          <button onclick="downloadQuotationByNumber('${q.quotation_number}')" class="btn" style="background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+            <i class="fa-solid fa-download"></i> Download
+          </button>
+          <button onclick="printQuotationByNumber('${q.quotation_number}')" class="btn" style="background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
             <i class="fa-solid fa-print"></i> Print
           </button>
           <button onclick="loadQuotationIntoPOS('${q.quotation_number}')" class="btn btn-primary" style="font-size: 12px; font-weight: 600; padding: 6px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 4px;">
@@ -1990,8 +2106,12 @@ async function submitSaveQuotation() {
     if (data.status === 'success') {
       closeNewQuotationModal();
       await loadQuotations();
-      alert(`Quotation ${data.quotation_number} saved successfully! Printing PDF...`);
-      printQuotationByNumber(data.quotation_number);
+      // Preview comes first, download second - same order as the on-screen buttons.
+      if (getQuotationByNumber(data.quotation_number)) {
+        previewQuotationByNumber(data.quotation_number);
+      } else {
+        alert(`Quotation ${data.quotation_number} saved successfully!`);
+      }
     } else {
       alert('Error: ' + (data.message || 'Could not save quotation'));
     }
@@ -2002,105 +2122,42 @@ async function submitSaveQuotation() {
 }
 
 function printQuotationByNumber(qNum) {
-  const q = allQuotationsData.find(item => item.quotation_number === qNum);
-  if (!q) return;
-
-  const content = `
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 30px; max-width: 800px; margin: auto; background: #fff; color: #1e293b;">
-      <div style="text-align: center; margin-bottom: 24px;">
-        <h1 style="font-size: 28px; font-weight: 800; margin: 0; color: #0f172a;">Hardware Store</h1>
-        <p style="margin: 4px 0; color: #475569; font-size: 14px;">Main Bazar Lahore</p>
-        <p style="margin: 2px 0; color: #475569; font-size: 14px;">Phone: 03021222005</p>
-      </div>
-
-      <div style="display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; padding: 12px 0; margin-bottom: 24px; font-size: 13px;">
-        <div>
-          <p style="margin: 3px 0;">Customer: <strong>${q.customer_name}</strong></p>
-          <p style="margin: 3px 0;">Quotation #: <strong>${q.quotation_number}</strong></p>
-        </div>
-        <div style="text-align: right;">
-          <p style="margin: 3px 0;">Date: <strong>${q.date}</strong></p>
-          <p style="margin: 3px 0;">Time: <strong>05:28 PM</strong></p>
-          <p style="margin: 3px 0; color: #dc2626;">Valid Until: <strong>${q.valid_until}</strong></p>
-        </div>
-      </div>
-
-      <table style="width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 13px;">
-        <thead>
-          <tr style="border-bottom: 2px solid #0f172a; text-align: left;">
-            <th style="padding: 8px 4px;">Product</th>
-            <th style="padding: 8px 4px; text-align: center;">Size</th>
-            <th style="padding: 8px 4px; text-align: center;">Unit</th>
-            <th style="padding: 8px 4px; text-align: center;">Qty</th>
-            <th style="padding: 8px 4px; text-align: right;">Price</th>
-            <th style="padding: 8px 4px; text-align: right;">Discount</th>
-            <th style="padding: 8px 4px; text-align: right;">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${q.items.map(it => `
-            <tr style="border-bottom: 1px solid #f1f5f9;">
-              <td style="padding: 10px 4px; font-weight: 600;">${it.product_name}</td>
-              <td style="padding: 10px 4px; text-align: center;">${it.size || '-'}</td>
-              <td style="padding: 10px 4px; text-align: center;">${it.unit || 'PCS'}</td>
-              <td style="padding: 10px 4px; text-align: center;">${parseFloat(it.qty).toFixed(2)}</td>
-              <td style="padding: 10px 4px; text-align: right;">Rs. ${parseFloat(it.unit_price).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-              <td style="padding: 10px 4px; text-align: right;">Rs. 0.00</td>
-              <td style="padding: 10px 4px; text-align: right; font-weight: 700;">Rs. ${parseFloat(it.subtotal).toLocaleString('en-US', {minimumFractionDigits: 2})}</td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-
-      <div style="display: flex; justify-content: flex-end; margin-bottom: 30px;">
-        <div style="width: 240px; font-size: 13px; line-height: 2;">
-          <div style="display: flex; justify-content: space-between;">
-            <span style="color: #64748b;">Subtotal:</span>
-            <strong>Rs. ${parseFloat(q.subtotal).toLocaleString('en-US', {minimumFractionDigits: 2})}</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between; font-size: 15px; font-weight: 800; border-top: 1px solid #0f172a; padding-top: 4px; margin-top: 4px;">
-            <span>TOTAL:</span>
-            <span style="color: #0f172a;">Rs. ${parseFloat(q.net_total).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>
-          </div>
-        </div>
-      </div>
-
-      <div style="text-align: center; border-top: 1px solid #e2e8f0; padding-top: 20px; color: #475569; font-size: 13px;">
-        <p style="font-weight: 700; margin: 0 0 4px 0;">Thank you for your interest!</p>
-        <p style="margin: 0; font-size: 12px; color: #94a3b8;">This is a quotation, not an invoice</p>
-      </div>
-    </div>
-  `;
-
-  const win = window.open('', '_blank');
-  win.document.write(`<html><head><title>${q.quotation_number}</title></head><body>${content}</body></html>`);
-  win.document.close();
-  win.focus();
-  setTimeout(() => { win.print(); }, 300);
+  const q = getQuotationByNumber(qNum);
+  if (!q) {
+    alert('Quotation ' + qNum + ' was not found.');
+    return;
+  }
+  printDocumentHtml(buildQuotationHtml(q));
 }
 
 
-function printCurrentQuotationDraft() {
-  if (quotationCart.length === 0) {
-    alert('Please add items to print');
-    return;
-  }
+/* Builds the in-progress (unsaved) quotation straight from the New Quotation
+   modal. Preview, Download and Print all read from this one function so the
+   three actions can never disagree about what is on screen. */
+function buildCurrentQuotationDraft() {
+  if (quotationCart.length === 0) return null;
 
-  let custName = currentQuotationCustType === 'walkin' ? (document.getElementById('quo-customer-input').value || 'Walk-in Customer') : (document.getElementById('quo-customer-select').value || 'Walk-in Customer');
-  const subtotal = quotationCart.reduce((acc, i) => acc + (i.qty * i.price), 0);
+  const walkinInput = document.getElementById('quo-customer-input');
+  const regularSelect = document.getElementById('quo-customer-select');
+  const custName = currentQuotationCustType === 'walkin'
+    ? (walkinInput?.value.trim() || 'Walk-in Customer')
+    : (regularSelect?.value || 'Walk-in Customer');
+
+  const validUntilInput = document.getElementById('quo-valid-until-input');
   const discInput = document.getElementById('quo-discount-input');
   const discountPct = discInput ? parseFloat(discInput.value) || 0 : 0;
+  const subtotal = quotationCart.reduce((acc, i) => acc + (i.qty * i.price), 0);
   const discountVal = (subtotal * discountPct) / 100;
-  const netTotal = Math.max(subtotal - discountVal, 0);
 
-  const mockQ = {
-    quotation_number: 'QUO-DRAFT-' + Math.floor(Math.random() * 10000),
+  return {
+    quotation_number: 'QUO-DRAFT',
+    is_draft: true,
     customer_name: custName,
-    date: new Date().toLocaleDateString(),
-    valid_until: document.getElementById('quo-valid-until-input').value || '30 Days',
+    date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    valid_until: validUntilInput?.value || '30 Days',
     subtotal: subtotal,
     overall_discount: discountVal,
-    net_total: netTotal,
+    net_total: Math.max(subtotal - discountVal, 0),
     items: quotationCart.map(i => ({
       product_name: i.name,
       size: i.size,
@@ -2110,8 +2167,243 @@ function printCurrentQuotationDraft() {
       subtotal: i.qty * i.price
     }))
   };
+}
 
-  printQuotationByNumber(mockQ.quotation_number);
+function previewQuotationDraft() {
+  const draft = buildCurrentQuotationDraft();
+  if (!draft) { alert('Please add at least one product to the quotation.'); return; }
+  openDocumentPreview(
+    buildQuotationBody(draft),
+    'Quotation (draft) - ' + draft.customer_name,
+    documentFilename('Quotation-DRAFT', 'html')
+  );
+}
+
+function downloadQuotationDraft() {
+  const draft = buildCurrentQuotationDraft();
+  if (!draft) { alert('Please add at least one product to the quotation.'); return; }
+  downloadDocumentHtml(buildQuotationHtml(draft), documentFilename('Quotation-DRAFT', 'html'));
+}
+
+function printCurrentQuotationDraft() {
+  const draft = buildCurrentQuotationDraft();
+  if (!draft) { alert('Please add items to print'); return; }
+  printDocumentHtml(buildQuotationHtml(draft));
+}
+
+/* =========================================================
+   4b. DOCUMENT PREVIEW / DOWNLOAD ENGINE
+   One stylesheet and one set of helpers drive the on-screen
+   Preview modal, the file Download and the Print window, so
+   bills and quotations always render identically.
+   Action order used everywhere in the app:
+        Preview  ->  Download  ->  Print
+========================================================= */
+const DOC_STYLES = [
+  '@page{size:A4;margin:14mm}',
+  '*{box-sizing:border-box}',
+  "body{font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;color:#1f2937;margin:0;padding:24px;background:#fff;line-height:1.5}",
+  '.doc{max-width:820px;margin:0 auto}',
+  '.doc-head{text-align:center;margin-bottom:20px}',
+  '.doc-head h1{font-size:26px;font-weight:800;margin:0;color:#0f172a;letter-spacing:.5px}',
+  '.doc-head p{margin:4px 0;color:#475569;font-size:14px}',
+  '.doc-meta{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;padding:12px 0;margin-bottom:20px;font-size:13px}',
+  '.doc-meta p{margin:3px 0}',
+  '.doc-meta .right{text-align:right;margin-left:auto}',
+  '.doc-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}',
+  'table.doc-table{width:100%;min-width:520px;border-collapse:collapse;font-size:13px}',
+  'table.doc-table th{background:#0f172a;color:#fff;text-align:left;padding:9px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}',
+  'table.doc-table th.num{text-align:right}',
+  'table.doc-table td{padding:9px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top;overflow-wrap:anywhere}',
+  'table.doc-table td.num{white-space:nowrap}',
+  '.num{text-align:right}',
+  '.muted{color:#64748b;font-size:12px}',
+  '.doc-totals{margin:20px 0 0 auto;max-width:320px;font-size:13px}',
+  '.doc-totals .row{display:flex;justify-content:space-between;gap:12px;padding:5px 0}',
+  '.doc-totals .row.discount{color:#dc2626}',
+  '.doc-totals .grand{border-top:2px solid #0f172a;margin-top:6px;padding-top:9px;font-size:17px;font-weight:800;color:#0f172a}',
+  '.doc-note{text-align:center;margin-top:28px;padding-top:18px;border-top:1px solid #e2e8f0;color:#475569;font-size:13px}',
+  '.doc-note p{margin:0 0 4px}',
+  '.doc-empty{text-align:center;color:#94a3b8;padding:26px}',
+  '@media (max-width:640px){body{padding:14px}.doc-head h1{font-size:20px}.doc-meta{font-size:12px}.doc-meta .right{text-align:left;margin-left:0}.doc-totals{max-width:none}}',
+  '@media print{body{padding:0;background:#fff}.doc-scroll{overflow:visible}}'
+].join('');
+
+let previewDocumentHtml = '';
+let previewDocumentTitle = 'Document';
+let previewDownloadFilename = 'document.html';
+
+/* Injects DOC_STYLES once so the preview renders exactly like the downloaded file */
+function ensureDocumentStyles() {
+  if (document.getElementById('preview-doc-styles')) return;
+  const styleTag = document.createElement('style');
+  styleTag.id = 'preview-doc-styles';
+  styleTag.textContent = DOC_STYLES;
+  document.head.appendChild(styleTag);
+}
+
+function documentFilename(base, extension) {
+  const safe = String(base || 'document')
+    .replace(/[^A-Za-z0-9._-]+/g, '-')
+    .replace(/-{2,}/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return (safe || 'document') + '.' + (extension || 'html');
+}
+
+function wrapDocumentHtml(title, bodyHtml) {
+  return '<!doctype html><html lang="en"><head><meta charset="utf-8">'
+    + '<meta name="viewport" content="width=device-width, initial-scale=1.0">'
+    + '<title>' + escapeBillHtml(title || 'Document') + '</title>'
+    + '<style>' + DOC_STYLES + '</style></head><body>' + bodyHtml + '</body></html>';
+}
+
+function extractDocumentBody(fullHtml) {
+  const match = /<body[^>]*>([\s\S]*)<\/body>/i.exec(fullHtml || '');
+  return match ? match[1] : (fullHtml || '');
+}
+
+/* ---- The three actions, always presented in this order ---- */
+function openDocumentPreview(bodyHtml, title, filename) {
+  const modal = document.getElementById('modal-print-preview');
+  const holder = document.getElementById('printable-receipt');
+  if (!modal || !holder) { alert('Preview is unavailable in this build.'); return; }
+
+  ensureDocumentStyles();
+  previewDocumentHtml = wrapDocumentHtml(title, bodyHtml);
+  previewDocumentTitle = title || 'Document';
+  previewDownloadFilename = filename || documentFilename(title, 'html');
+
+  holder.innerHTML = bodyHtml;
+  const titleEl = document.getElementById('preview-doc-title');
+  if (titleEl) { titleEl.textContent = previewDocumentTitle; titleEl.title = previewDocumentTitle; }
+
+  document.body.classList.add('preview-open');
+  modal.classList.add('active');
+  holder.scrollTop = 0;
+}
+
+function closePrintPreviewModal() {
+  const modal = document.getElementById('modal-print-preview');
+  if (modal) modal.classList.remove('active');
+  document.body.classList.remove('preview-open');
+}
+
+function printReceipt() {
+  if (!previewDocumentHtml) { closePrintPreviewModal(); return; }
+  printDocumentHtml(previewDocumentHtml, previewDocumentTitle);
+}
+
+function downloadCurrentPreviewDocument() {
+  if (!previewDocumentHtml) { alert('There is nothing to download yet.'); return; }
+  downloadDocumentHtml(previewDocumentHtml, previewDownloadFilename);
+}
+
+function printDocumentHtml(fullHtml) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) { alert('Allow pop-ups to print this document.'); return; }
+  printWindow.document.write(fullHtml);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => { printWindow.print(); }, 300);
+}
+
+function downloadDocumentHtml(fullHtml, filename) {
+  const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename || documentFilename('document', 'html');
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/* ---- Quotation documents ---- */
+function money(value) {
+  return 'Rs. ' + Number(value || 0).toLocaleString('en-US', { minimumFractionDigits: 2 });
+}
+
+function buildQuotationBody(q) {
+  const rows = (q.items || []).map(it => `
+          <tr>
+            <td><strong>${escapeBillHtml(it.product_name)}</strong><br><span class="muted">${escapeBillHtml(it.size || '-')} &bull; ${escapeBillHtml(it.unit || 'PCS')}</span></td>
+            <td class="num">${Number(it.qty).toLocaleString('en-US', { minimumFractionDigits: 2 })}</td>
+            <td class="num">${money(it.unit_price)}</td>
+            <td class="num"><strong>${money(it.subtotal)}</strong></td>
+          </tr>`).join('');
+
+  const bodyRows = rows || '<tr><td colspan="4" class="doc-empty">No items on this quotation</td></tr>';
+  const draftTag = q.is_draft ? ' &bull; DRAFT' : '';
+
+  return `
+  <div class="doc">
+    <div class="doc-head">
+      <h1>Hardware Store</h1>
+      <p>Main Bazar Lahore</p>
+      <p>Phone: 03021222005</p>
+    </div>
+
+    <div class="doc-meta">
+      <div>
+        <p>Customer: <strong>${escapeBillHtml(q.customer_name)}</strong></p>
+        <p>Quotation #: <strong>${escapeBillHtml(q.quotation_number)}${draftTag}</strong></p>
+      </div>
+      <div class="right">
+        <p>Date: <strong>${escapeBillHtml(q.date)}</strong></p>
+        <p style="color:#dc2626;">Valid Until: <strong>${escapeBillHtml(q.valid_until)}</strong></p>
+      </div>
+    </div>
+
+    <div class="doc-scroll">
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th class="num">Qty</th>
+            <th class="num">Unit Price</th>
+            <th class="num">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>
+
+    <div class="doc-totals">
+      <div class="row"><span>Subtotal</span><strong>${money(q.subtotal)}</strong></div>
+      <div class="row discount"><span>Discount</span><strong>- ${money(q.overall_discount)}</strong></div>
+      <div class="row grand"><span>NET TOTAL</span><span>${money(q.net_total)}</span></div>
+    </div>
+
+    <div class="doc-note">
+      <p><strong>Thank you for your interest!</strong></p>
+      <p class="muted">This is a quotation, not an invoice</p>
+    </div>
+  </div>`;
+}
+
+function buildQuotationHtml(q) {
+  return wrapDocumentHtml(q.quotation_number, buildQuotationBody(q));
+}
+
+function getQuotationByNumber(qNum) {
+  return allQuotationsData.find(item => item.quotation_number === qNum) || null;
+}
+
+function previewQuotationByNumber(qNum) {
+  const q = getQuotationByNumber(qNum);
+  if (!q) { alert('Quotation ' + qNum + ' was not found.'); return; }
+  openDocumentPreview(
+    buildQuotationBody(q),
+    'Quotation ' + q.quotation_number,
+    documentFilename(q.quotation_number, 'html')
+  );
+}
+
+function downloadQuotationByNumber(qNum) {
+  const q = getQuotationByNumber(qNum);
+  if (!q) { alert('Quotation ' + qNum + ' was not found.'); return; }
+  downloadDocumentHtml(buildQuotationHtml(q), documentFilename(q.quotation_number, 'html'));
 }
 
 async function loadQuotationIntoPOS(quotationNumber = null) {
@@ -2350,9 +2642,11 @@ async function submitCreatePOSBill() {
       change: Math.max(cashReceived - netTotal, 0)
     };
     lastCreatedBill = savedBill;
-    downloadBillFile(savedBill);
 
-    const message = `Bill ${data.bill_number} saved and downloaded.`;
+    // Preview first, download second - matches the on-screen button order.
+    previewPOSBill();
+
+    const message = `Bill ${data.bill_number} saved. Review the preview, then download or print.`;
     const alertText = document.getElementById('pos-success-alert-text');
     if (alertText) alertText.textContent = message;
     const alertBanner = document.getElementById('pos-success-alert-banner');
@@ -2372,9 +2666,67 @@ async function submitCreatePOSBill() {
   }
 }
 
+/* ---- Bill documents (same engine as quotations) ---- */
+function buildBillBody(bill) {
+  const rows = (bill.items || []).map(item => `
+          <tr>
+            <td><strong>${escapeBillHtml(item.name)}</strong><br><span class="muted">${escapeBillHtml(item.size || '-')} &bull; ${escapeBillHtml(item.unit || 'PCS')}</span></td>
+            <td class="num">${Number(item.qty).toLocaleString()}</td>
+            <td class="num">${money(item.price)}</td>
+            <td class="num"><strong>${money(Number(item.qty) * Number(item.price))}</strong></td>
+          </tr>`).join('');
+
+  const bodyRows = rows || '<tr><td colspan="4" class="doc-empty">No items on this bill</td></tr>';
+  const draftTag = bill.is_draft ? ' &bull; DRAFT' : '';
+
+  return `
+  <div class="doc">
+    <div class="doc-head">
+      <h1>DevInfantary POS</h1>
+      <p>Customer Bill</p>
+    </div>
+
+    <div class="doc-meta">
+      <div>
+        <p>Customer: <strong>${escapeBillHtml(bill.customer_name)}</strong></p>
+        ${bill.quotation_number ? `<p>Quotation: <strong>${escapeBillHtml(bill.quotation_number)}</strong></p>` : ''}
+      </div>
+      <div class="right">
+        <p>Bill #: <strong>${escapeBillHtml(bill.bill_number)}${draftTag}</strong></p>
+        <p>Date: <strong>${escapeBillHtml(bill.date || new Date().toLocaleDateString())}</strong></p>
+      </div>
+    </div>
+
+    <div class="doc-scroll">
+      <table class="doc-table">
+        <thead>
+          <tr>
+            <th>Product</th>
+            <th class="num">Qty</th>
+            <th class="num">Rate</th>
+            <th class="num">Amount</th>
+          </tr>
+        </thead>
+        <tbody>${bodyRows}</tbody>
+      </table>
+    </div>
+
+    <div class="doc-totals">
+      <div class="row"><span>Subtotal</span><strong>${money(bill.subtotal)}</strong></div>
+      <div class="row discount"><span>Discount</span><strong>- ${money(bill.discount)}</strong></div>
+      <div class="row grand"><span>TOTAL</span><span>${money(bill.net_total)}</span></div>
+      <div class="row"><span>Cash received</span><span>${money(bill.cash_received)}</span></div>
+      <div class="row"><span>Change</span><span>${money(bill.change)}</span></div>
+    </div>
+
+    <div class="doc-note">
+      <p><strong>Thank you for your business.</strong></p>
+    </div>
+  </div>`;
+}
+
 function buildBillHtml(bill) {
-  const rows = (bill.items || []).map(item => `<tr><td>${escapeBillHtml(item.name)}<br><small>${escapeBillHtml(item.size || '')} • ${escapeBillHtml(item.unit || '')}</small></td><td>${Number(item.qty).toLocaleString()}</td><td>Rs ${Number(item.price).toLocaleString()}</td><td>Rs ${(Number(item.qty) * Number(item.price)).toLocaleString()}</td></tr>`).join('');
-  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeBillHtml(bill.bill_number)}</title><style>body{font-family:Arial,sans-serif;color:#111827;margin:32px}header{display:flex;justify-content:space-between;border-bottom:3px solid #111827;padding-bottom:16px}h1{margin:0;font-size:24px}.muted{color:#64748b;font-size:12px}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb}th{background:#f1f5f9}.totals{width:300px;margin:20px 0 0 auto}.totals div{display:flex;justify-content:space-between;padding:6px}.grand{font-size:18px;font-weight:700;border-top:2px solid #111827;margin-top:6px;padding-top:10px!important}footer{text-align:center;margin-top:40px;color:#64748b;font-size:12px}@media print{body{margin:0}}</style></head><body><header><div><h1>DevInfantary POS</h1><div class="muted">Customer Bill</div></div><div><strong>${escapeBillHtml(bill.bill_number)}</strong><br><span class="muted">${escapeBillHtml(bill.date || new Date().toLocaleDateString())}</span></div></header><p><strong>Customer:</strong> ${escapeBillHtml(bill.customer_name)}</p>${bill.quotation_number ? `<p class="muted">Quotation: ${escapeBillHtml(bill.quotation_number)}</p>` : ''}<table><thead><tr><th>Product</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div class="totals"><div><span>Subtotal</span><strong>Rs ${Number(bill.subtotal).toLocaleString()}</strong></div><div><span>Discount</span><strong>Rs ${Number(bill.discount).toLocaleString()}</strong></div><div class="grand"><span>Total</span><span>Rs ${Number(bill.net_total).toLocaleString()}</span></div><div><span>Cash received</span><span>Rs ${Number(bill.cash_received).toLocaleString()}</span></div><div><span>Change</span><span>Rs ${Number(bill.change).toLocaleString()}</span></div></div><footer>Thank you for your business.</footer></body></html>`;
+  return wrapDocumentHtml(bill.bill_number || 'Bill', buildBillBody(bill));
 }
 
 function downloadBillFile(bill, filename = null) {
@@ -2386,31 +2738,68 @@ function downloadBillFile(bill, filename = null) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = filename || `${bill.bill_number || 'bill'}.html`;
+  link.download = filename || documentFilename(bill.bill_number, 'html');
   document.body.appendChild(link);
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+/* Builds an unsaved bill from the live POS cart so Preview and Download work
+   before the bill is created. */
+function buildPendingBillFromCart() {
+  if (posCart.length === 0) return null;
+
+  const customerInput = document.getElementById('pos-customer-input');
+  const customerName = customerInput?.value.trim() || 'Walk-in Customer';
+  const quotationInput = document.getElementById('pos-quotation-ref-input');
+  const quotationNumber = quotationInput?.value.trim() || '';
+  const discountPercent = Number(document.getElementById('pos-discount-input')?.value || 0);
+  const cashReceived = Number(document.getElementById('pos-cash-input')?.value || 0);
+  const subtotal = posCart.reduce((total, item) => total + (item.qty * item.price), 0);
+  const discount = (subtotal * discountPercent) / 100;
+  const netTotal = Math.max(subtotal - discount, 0);
+
+  return {
+    bill_number: 'DRAFT',
+    is_draft: true,
+    date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+    customer_name: customerName,
+    quotation_number: quotationNumber,
+    items: posCart.map(item => ({ name: item.name, size: item.size, unit: item.unit, qty: item.qty, price: item.price })),
+    subtotal: subtotal,
+    discount: discount,
+    net_total: netTotal,
+    cash_received: cashReceived,
+    change: Math.max(cashReceived - netTotal, 0)
+  };
+}
+
+/* Prefers the bill that was just saved, otherwise falls back to the live cart. */
+function getBillForDocument() {
+  return lastCreatedBill || buildPendingBillFromCart();
+}
+
+function previewPOSBill() {
+  const bill = getBillForDocument();
+  if (!bill) { alert('Add products to the cart before previewing the bill.'); return; }
+  openDocumentPreview(
+    buildBillBody(bill),
+    bill.is_draft ? 'Bill (draft) - ' + bill.customer_name : 'Bill ' + bill.bill_number,
+    documentFilename(bill.bill_number, 'html')
+  );
+}
+
 function downloadPOSBill() {
-  downloadBillFile(lastCreatedBill);
+  const bill = getBillForDocument();
+  if (!bill) { alert('Add products to the cart before downloading the bill.'); return; }
+  downloadBillFile(bill);
 }
 
 function printPOSBill() {
-  if (!lastCreatedBill) {
-    window.print();
-    return;
-  }
-  const printWindow = window.open('', '_blank');
-  if (!printWindow) {
-    alert('Allow pop-ups to print the bill.');
-    return;
-  }
-  printWindow.document.write(buildBillHtml(lastCreatedBill));
-  printWindow.document.close();
-  printWindow.focus();
-  setTimeout(() => printWindow.print(), 250);
+  const bill = getBillForDocument();
+  if (!bill) { window.print(); return; }
+  printDocumentHtml(buildBillHtml(bill));
 }
 
 /* =========================================================

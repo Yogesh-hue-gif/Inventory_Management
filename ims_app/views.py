@@ -5,7 +5,8 @@ from django.db import IntegrityError
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.db.models import Sum, Count, Q, F
+from django.db.models import Sum, Count, Q, F, Value, DecimalField, ExpressionWrapper
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from .models import (
     TenantStore, StaffUser, Category, Product, ProductVariant,
@@ -115,6 +116,130 @@ def api_dashboard_stats(request):
         'quotations_count': quotations_cnt,
         'available_pct': round((in_stock / total_inventory * 100) if total_inventory else 0.0, 1)
     })
+
+def api_dashboard_drilldown(request):
+    """Returns the individual records behind a dashboard stat card.
+
+    Every filter here mirrors the matching branch of api_dashboard_stats so the
+    listed records always add up to the number shown on the card.
+    """
+    metric = (request.GET.get('metric') or '').strip().lower()
+    today = timezone.now().date()
+    week_ago = today - timedelta(days=7)
+    month_ago = today - timedelta(days=30)
+    limit = 200
+    money_field = DecimalField(max_digits=14, decimal_places=2)
+
+    def bill_row(bill, item_count, amount=None):
+        return {
+            'ref': bill.bill_number,
+            'date': bill.date.strftime('%d %b %Y') if bill.date else '-',
+            'party': bill.customer.name if bill.customer_id else 'Walk-in Customer',
+            'detail': f'{item_count} item(s)',
+            'amount': float(bill.net_total if amount is None else amount),
+            'status': bill.status,
+        }
+
+    def item_counts(bills):
+        ids = [b.id for b in bills]
+        if not ids:
+            return {}
+        return dict(
+            CustomerBillItem.objects.filter(bill_id__in=ids)
+            .values_list('bill_id')
+            .annotate(n=Count('id'))
+            .values_list('bill_id', 'n')
+        )
+
+    # --- Revenue cards: the bills that make up the amount -------------------
+    if metric == 'today':
+        qs = CustomerBill.objects.filter(date=today)
+        title, subtitle = "Today's Revenue", f'Bills dated {today.strftime("%d %b %Y")}'
+    elif metric == 'week':
+        qs = CustomerBill.objects.filter(date__gte=week_ago)
+        title, subtitle = 'Week Revenue', f'Bills from {week_ago.strftime("%d %b %Y")} onwards'
+    elif metric == 'month':
+        qs = CustomerBill.objects.filter(date__gte=month_ago)
+        title, subtitle = 'Month Revenue', f'Bills from {month_ago.strftime("%d %b %Y")} onwards'
+    elif metric == 'total':
+        qs = CustomerBill.objects.all()
+        title, subtitle = 'Total Revenue', 'Every recorded bill'
+    else:
+        qs = None
+
+    if qs is not None:
+        total_amount = qs.aggregate(s=Sum('net_total'))['s'] or Decimal('0.00')
+        ordered = list(qs.order_by('-date', '-id')[:limit])
+        counts = item_counts(ordered)
+        return JsonResponse({
+            'metric': metric, 'title': title, 'subtitle': subtitle,
+            'count': qs.count(), 'shown': len(ordered),
+            'total_amount': float(total_amount), 'amount_label': 'Net Total',
+            'rows': [bill_row(b, counts.get(b.id, 0)) for b in ordered],
+        })
+
+    # --- Receivables -------------------------------------------------------
+    if metric == 'outstanding':
+        qs = CustomerBill.objects.annotate(
+            remaining=ExpressionWrapper(
+                F('net_total') - F('amount_paid'), output_field=money_field
+            )
+        ).filter(remaining__gt=0)
+        total_amount = qs.aggregate(s=Sum('remaining'))['s'] or Decimal('0.00')
+        ordered = list(qs.order_by('-date', '-id')[:limit])
+        counts = item_counts(ordered)
+        return JsonResponse({
+            'metric': metric, 'title': 'Outstanding Receivables',
+            'subtitle': 'Bills that still carry an unpaid balance',
+            'count': qs.count(), 'shown': len(ordered),
+            'total_amount': float(total_amount), 'amount_label': 'Due',
+            'rows': [bill_row(b, counts.get(b.id, 0), amount=b.remaining) for b in ordered],
+        })
+
+    if metric == 'pending':
+        qs = CustomerBill.objects.filter(Q(status='Partial') | Q(status='Unpaid'))
+        total_amount = qs.aggregate(s=Sum('net_total'))['s'] or Decimal('0.00')
+        ordered = list(qs.order_by('-date', '-id')[:limit])
+        counts = item_counts(ordered)
+        return JsonResponse({
+            'metric': metric, 'title': 'Pending Bills',
+            'subtitle': 'Bills awaiting full payment',
+            'count': qs.count(), 'shown': len(ordered),
+            'total_amount': float(total_amount), 'amount_label': 'Net Total',
+            'rows': [bill_row(b, counts.get(b.id, 0)) for b in ordered],
+        })
+
+    # --- Customers ---------------------------------------------------------
+    if metric == 'customers':
+        qs = Customer.objects.filter(is_active=True).annotate(
+            lifetime=Coalesce(
+                Sum('bills__net_total'),
+                Value(Decimal('0.00'), output_field=money_field),
+            ),
+            bill_count=Count('bills', distinct=True),
+        ).order_by('-lifetime', 'name')
+        ordered = list(qs[:limit])
+        rows = [{
+            'ref': c.name,
+            'date': '-',
+            'party': c.phone or c.address or 'No contact details on file',
+            'detail': f'{c.bill_count} bill(s) - {c.customer_type}',
+            'amount': float(c.lifetime),
+            'status': 'Active',
+        } for c in ordered]
+        return JsonResponse({
+            'metric': metric, 'title': 'Customers',
+            'subtitle': 'Active customers ranked by lifetime spend',
+            'count': qs.count(), 'shown': len(rows),
+            'total_amount': float(sum(r['amount'] for r in rows)),
+            'amount_label': 'Lifetime Spend', 'rows': rows,
+        })
+
+    return JsonResponse(
+        {'status': 'error', 'message': f'No drill-down is available for "{metric}".'},
+        status=400
+    )
+
 
 def api_dashboard_charts(request):
     today = timezone.now().date()

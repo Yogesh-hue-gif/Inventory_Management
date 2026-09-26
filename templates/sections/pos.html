@@ -128,7 +128,10 @@
         <div id="pos-last-bill-ref" style="display:none; margin-top:8px; color:#9ca3af; font-size:11px; text-align:center;"></div>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
+      <div class="pos-action-stack">
+        <button type="button" onclick="previewPOSBill()" class="btn" style="background:#1f2937; border: 1px solid #374151; color: #ffffff; width: 100%; justify-content: center;">
+          <i class="fa-solid fa-eye"></i> Preview Bill
+        </button>
         <button type="button" onclick="downloadPOSBill()" class="btn" style="background:#1f2937; border: 1px solid #374151; color: #ffffff; width: 100%; justify-content: center;">
           <i class="fa-solid fa-download"></i> Download Bill
         </button>

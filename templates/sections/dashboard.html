@@ -14,37 +14,37 @@
 
   <!-- Row 1: 6 Top Stat Cards -->
   <div class="stats-grid" style="grid-template-columns: repeat(6, 1fr);">
-    <div class="stat-card">
+    <div class="stat-card stat-card-clickable" data-metric="today" role="button" tabindex="0" aria-label="Show the bills behind today's revenue">
       <div class="stat-label">Today Revenue</div>
       <div id="stat-today-rev" class="stat-val">Rs. 0</div>
       <div id="stat-today-bills" class="stat-sub">0 bills today</div>
       <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-coins"></i></div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stat-card-clickable" data-metric="week" role="button" tabindex="0" aria-label="Show the bills behind week revenue">
       <div class="stat-label">Week Revenue</div>
       <div id="stat-week-rev" class="stat-val">Rs. 0</div>
       <div id="stat-week-bills" class="stat-sub">0 bills</div>
       <div class="stat-icon-logo icon-purple"><i class="fa-solid fa-calendar-days"></i></div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stat-card-clickable" data-metric="month" role="button" tabindex="0" aria-label="Show the bills behind month revenue">
       <div class="stat-label">Month Revenue</div>
       <div id="stat-month-rev" class="stat-val">Rs. 0</div>
       <div id="stat-month-bills" class="stat-sub">0 bills</div>
       <div class="stat-icon-logo icon-cyan"><i class="fa-solid fa-calendar-check"></i></div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stat-card-clickable" data-metric="total" role="button" tabindex="0" aria-label="Show all bills behind total revenue">
       <div class="stat-label">Total Revenue</div>
       <div id="stat-total-rev" class="stat-val">Rs. 0</div>
       <div class="stat-sub">All time</div>
       <div class="stat-icon-logo icon-blue"><i class="fa-solid fa-infinity"></i></div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stat-card-clickable" data-metric="customers" role="button" tabindex="0" aria-label="Show the customers behind this count">
       <div class="stat-label">Customers</div>
       <div id="stat-cust-cnt" class="stat-val">0</div>
       <div class="stat-sub">Active customers</div>
       <div class="stat-icon-logo icon-purple"><i class="fa-solid fa-user-group"></i></div>
     </div>
-    <div class="stat-card">
+    <div class="stat-card stat-card-clickable" data-metric="outstanding" role="button" tabindex="0" aria-label="Show the bills behind outstanding receivables">
       <div class="stat-label">Outstanding</div>
       <div id="stat-outstanding" class="stat-val" style="color: var(--accent-amber);">Rs. 0</div>
       <div class="stat-sub">Receivables</div>
@@ -54,7 +54,7 @@
 
   <!-- Row 2: 6 Middle Stat Cards -->
   <div class="stats-grid" style="grid-template-columns: repeat(6, 1fr);">
-    <div class="stat-card">
+    <div class="stat-card stat-card-clickable" data-metric="pending" role="button" tabindex="0" aria-label="Show the unpaid bills behind this count">
       <div class="stat-label">Pending Bills</div>
       <div id="stat-pending-bills" class="stat-val" style="color: var(--accent-amber);">0</div>
       <div class="stat-sub">Unpaid</div>
@@ -303,7 +303,7 @@
     </div>
     <div class="resp-grid-4" style="padding: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
       <!-- Today Card (Green Accent Line) -->
-      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #10b981; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div class="drilldown-tile stat-card-clickable" data-metric="today" role="button" tabindex="0" aria-label="Show the bills behind today's revenue" style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #10b981; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div style="font-size: 11px; font-weight: 600; color: #64748b;">Today's Revenue</div>
         <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;" id="rev-sum-today-val">Rs. 0</div>
         <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="rev-sum-today-sub">0 bills</div>
@@ -311,7 +311,7 @@
       </div>
 
       <!-- Week Card (Blue Accent Line) -->
-      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #3b82f6; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div class="drilldown-tile stat-card-clickable" data-metric="week" role="button" tabindex="0" aria-label="Show the bills behind week revenue" style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #3b82f6; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div style="font-size: 11px; font-weight: 600; color: #64748b;">Week Revenue</div>
         <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;" id="rev-sum-week-val">Rs. 0</div>
         <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="rev-sum-week-sub">0 bills</div>
@@ -319,7 +319,7 @@
       </div>
 
       <!-- Month Card (Cyan Accent Line) -->
-      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #06b6d4; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div class="drilldown-tile stat-card-clickable" data-metric="month" role="button" tabindex="0" aria-label="Show the bills behind month revenue" style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #06b6d4; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div style="font-size: 11px; font-weight: 600; color: #64748b;">Month Revenue</div>
         <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;" id="rev-sum-month-val">Rs. 0</div>
         <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="rev-sum-month-sub">0 bills</div>
@@ -327,7 +327,7 @@
       </div>
 
       <!-- Total Card (Purple Accent Line) -->
-      <div style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #a855f7; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+      <div class="drilldown-tile stat-card-clickable" data-metric="total" role="button" tabindex="0" aria-label="Show all bills behind total revenue" style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #a855f7; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div style="font-size: 11px; font-weight: 600; color: #64748b;">Total Revenue</div>
         <div style="font-size: 18px; font-weight: 700; color: #0f172a; margin-top: 4px;" id="rev-sum-total-val">Rs. 0</div>
         <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;" id="rev-sum-total-sub">All time</div>

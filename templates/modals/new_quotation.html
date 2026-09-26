@@ -150,18 +150,26 @@
 
         </div>
 
-        <!-- Section 4: Action Buttons -->
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button type="button" onclick="closeNewQuotationModal()" style="width: 100%; padding: 10px; background: #1e293b; color: #cbd5e1; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
-            ✕ Cancel
+        <!-- Section 4: Action Buttons (Preview -> Download -> Print -> Save -> Cancel) -->
+        <div class="quo-action-stack">
+          <button type="button" onclick="previewQuotationDraft()" class="btn" style="width: 100%; padding: 10px; background: #1e3a8a; color: #93c5fd; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-eye"></i> Preview Quotation
           </button>
-          
-          <button type="button" onclick="printCurrentQuotationDraft()" style="width: 100%; padding: 10px; background: #1e3a8a; color: #93c5fd; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+
+          <button type="button" onclick="downloadQuotationDraft()" class="btn" style="width: 100%; padding: 10px; background: #1e3a8a; color: #93c5fd; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            <i class="fa-solid fa-download"></i> Download Quotation
+          </button>
+
+          <button type="button" onclick="printCurrentQuotationDraft()" class="btn" style="width: 100%; padding: 10px; background: #1e3a8a; color: #93c5fd; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
             <i class="fa-solid fa-print"></i> Print Quotation
           </button>
 
-          <button type="button" onclick="submitSaveQuotation()" style="width: 100%; padding: 11px; background: #10b981; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          <button type="button" onclick="submitSaveQuotation()" class="btn" style="width: 100%; padding: 11px; background: #10b981; color: #ffffff; border: none; border-radius: 6px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;">
             <i class="fa-solid fa-floppy-disk"></i> Save Quotation
+          </button>
+
+          <button type="button" onclick="closeNewQuotationModal()" class="btn" style="width: 100%; padding: 10px; background: #1e293b; color: #cbd5e1; border: none; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px;">
+            ✕ Cancel
           </button>
         </div>
 

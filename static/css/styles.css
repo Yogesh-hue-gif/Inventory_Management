@@ -826,3 +826,291 @@ a { color: var(--accent-blue); text-decoration: none; }
   .nav-menu { padding: 8px 10px; }
   .nav-link { padding: 7px 12px; }
 }
+
+/* ==========================================================================
+   QUOTATION LIST + DETAIL SPLIT
+   Was a hard-coded `grid-template-columns: 360px 1fr` with no responsive class,
+   so the rail stayed 360px wide on phones and forced horizontal scrolling.
+   ========================================================================== */
+.quo-list-detail-grid {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr);
+  gap: 16px;
+}
+.quo-list-detail-grid > * { min-width: 0; }
+#quotations-list {
+  height: 520px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 4px;
+}
+
+/* ==========================================================================
+   STACKED ACTION BUTTONS (POS checkout rail + quotation control rail)
+   ========================================================================== */
+.pos-action-stack,
+.quo-action-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+}
+.quo-action-stack { margin-top: 0; }
+
+/* ==========================================================================
+   DOCUMENT PREVIEW MODAL
+   ========================================================================== */
+#modal-print-preview .modal-content {
+  width: 94%;
+  max-width: 860px;
+  max-height: 92vh;
+  padding: 0;
+  overflow: hidden;
+  background: #ffffff;
+  color: #000000;
+  display: flex;
+  flex-direction: column;
+}
+#modal-print-preview .modal-header {
+  padding: 12px 16px;
+  background: var(--table-header-bg);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+#modal-print-preview .modal-header h3 {
+  color: #ffffff;
+  font-size: 15px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+#modal-print-preview .modal-body {
+  padding: 0;
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+  background: #e5e7eb;
+}
+
+/* Sticky action bar inside the preview: Download sits directly after Preview */
+.preview-doc-bar {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid #d1d5db;
+}
+.preview-doc-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1 1 140px;
+}
+.preview-doc-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.preview-doc-actions .btn { flex: 0 1 auto; justify-content: center; min-width: 120px; }
+
+.preview-doc-surface { padding: 16px; }
+#printable-receipt { max-width: 100%; }
+
+#modal-print-preview .modal-footer {
+  padding: 10px 14px;
+  border-top: 1px solid #d1d5db;
+  background: #f8fafc;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+}
+#modal-print-preview .modal-footer .btn { flex: 1 1 auto; justify-content: center; }
+
+/* ==========================================================================
+   QUOTATION DETAIL PANEL HEADER + ACTION ROW
+   ========================================================================== */
+.quo-detail-head { flex-wrap: wrap; gap: 10px; }
+.quo-detail-head > * { min-width: 0; }
+.quo-detail-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* ==========================================================================
+   RESPONSIVE ADDITIONS
+   ========================================================================== */
+/* Long product names / SKUs must never stretch a grid or table track */
+.page-view, .modal-body, .card-box, .table-container, #printable-receipt {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ---- <= 1024px : quotation rail stacks above the detail panel ---- */
+@media (max-width: 1024px) {
+  .quo-list-detail-grid { grid-template-columns: minmax(0, 1fr); }
+  #quotations-list { height: 340px; }
+}
+
+/* ---- <= 768px : preview chrome gets tighter ---- */
+@media (max-width: 768px) {
+  .preview-doc-surface { padding: 10px; }
+  .preview-doc-bar { padding: 8px 10px; }
+  .preview-doc-name { font-size: 12px; flex: 1 1 100%; }
+  .preview-doc-actions { width: 100%; }
+  .preview-doc-actions .btn { flex: 1 1 0; min-width: 0; }
+
+  #modal-print-preview .modal-content { width: 100%; max-height: 94vh; }
+  #modal-print-preview .modal-footer .btn { flex: 1 1 100%; }
+
+  .pos-action-stack, .quo-action-stack { gap: 7px; }
+}
+
+/* ---- <= 560px : shorter quotation list, stacked POS/quotation buttons ---- */
+@media (max-width: 560px) {
+  #quotations-list { height: 260px; }
+  .quo-action-stack .btn, .pos-action-stack .btn { padding: 11px 8px; }
+}
+
+/* ---- Printing straight from the page while the preview is open ---- */
+@media print {
+  body.preview-open { background: #ffffff; }
+  body.preview-open #modal-print-preview {
+    position: static;
+    background: none;
+    backdrop-filter: none;
+    display: block;
+  }
+  body.preview-open #modal-print-preview .modal-content {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    box-shadow: none;
+    overflow: visible;
+  }
+  body.preview-open #modal-print-preview .modal-header,
+  body.preview-open #modal-print-preview .modal-footer,
+  body.preview-open .preview-doc-bar { display: none !important; }
+  body.preview-open #modal-print-preview .modal-body { overflow: visible; background: #ffffff; }
+  body.preview-open .preview-doc-surface { padding: 0; }
+}
+
+/* ==========================================================================
+   DASHBOARD STAT DRILL-DOWN
+   Cards that reveal the records behind a number look (and behave) clickable.
+   ========================================================================== */
+.stat-card-clickable {
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+.stat-card-clickable:hover,
+.stat-card-clickable:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--accent-blue);
+  outline: none;
+}
+.stat-card-clickable:hover .stat-icon-logo,
+.stat-card-clickable:focus-visible .stat-icon-logo {
+  transform: scale(1.08);
+}
+.stat-card-clickable .stat-icon-logo { transition: transform 0.15s ease; }
+.stat-card-clickable:focus-visible { box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.35); }
+
+/* Small "view details" affordance so the drill-down is discoverable */
+.stat-card-clickable::after {
+  content: '\f0b50';
+  font-family: 'Font Awesome 6 Free';
+  font-weight: 900;
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  font-size: 11px;
+  color: var(--accent-blue);
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.stat-card-clickable:hover::after,
+.stat-card-clickable:focus-visible::after { opacity: 1; }
+
+.drilldown-tile { position: relative; }
+
+/* --- Modal shell --- */
+.drilldown-modal {
+  width: 94%;
+  max-width: 980px;
+  max-height: 92vh;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+}
+.drilldown-modal .modal-header {
+  padding: 12px 16px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.drilldown-heading { min-width: 0; }
+.drilldown-heading h3 {
+  color: #ffffff;
+  font-size: 15px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.drilldown-subtitle {
+  margin: 3px 0 0;
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.75);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.drilldown-body { padding: 0; overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+.drilldown-table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.drilldown-table { min-width: 640px; margin: 0; }
+.drilldown-table th.drilldown-num,
+.drilldown-table td.drilldown-num { text-align: right; white-space: nowrap; }
+.drilldown-empty { text-align: center; color: var(--text-dim); padding: 32px 16px; }
+
+.drilldown-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-color);
+  background: #f8fafc;
+}
+.drilldown-count { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+.drilldown-total { display: flex; align-items: baseline; gap: 10px; }
+.drilldown-total span { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); }
+.drilldown-total strong { font-family: 'Outfit', sans-serif; font-size: 20px; font-weight: 700; color: var(--accent-blue); }
+
+/* ---- <= 768px : drill-down modal goes full width, footer stacks ---- */
+@media (max-width: 768px) {
+  .drilldown-modal { width: 100%; max-height: 94vh; }
+  .drilldown-footer { flex-direction: column; align-items: stretch; gap: 6px; text-align: right; }
+  .drilldown-count { text-align: left; }
+  .drilldown-total { justify-content: space-between; }
+  .stat-card-clickable::after { display: none; }
+  .stat-card-clickable:hover,
+  .stat-card-clickable:focus-visible { transform: none; }
+}

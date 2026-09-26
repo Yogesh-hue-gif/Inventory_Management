@@ -1,0 +1,38 @@
+<!-- MODAL: DASHBOARD STAT DRILL-DOWN (which records make up this amount) -->
+<div id="modal-dashboard-drilldown" class="modal-overlay">
+  <div class="modal-content drilldown-modal">
+    <div class="modal-header">
+      <div class="drilldown-heading">
+        <h3><i class="fa-solid fa-list-check"></i> <span id="drilldown-title">Breakdown</span></h3>
+        <p id="drilldown-subtitle" class="drilldown-subtitle"></p>
+      </div>
+      <button type="button" onclick="closeDashboardDrilldown()" class="modal-close-btn" aria-label="Close breakdown">&times;</button>
+    </div>
+    <div class="modal-body drilldown-body">
+      <div class="drilldown-table-wrap">
+        <table class="data-table drilldown-table">
+          <thead>
+            <tr>
+              <th>Reference</th>
+              <th>Date</th>
+              <th>Customer</th>
+              <th>Detail</th>
+              <th class="drilldown-num">Amount</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="drilldown-body">
+            <tr><td colspan="6" class="drilldown-empty">Loading...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="drilldown-footer">
+      <span id="drilldown-count" class="drilldown-count">0 records</span>
+      <span class="drilldown-total">
+        <span id="drilldown-total-label">Total</span>
+        <strong id="drilldown-total">Rs. 0.00</strong>
+      </span>
+    </div>
+  </div>
+</div>

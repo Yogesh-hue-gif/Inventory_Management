@@ -11,6 +11,7 @@ urlpatterns = [
     # Dashboard
     path('api/dashboard/stats/', views.api_dashboard_stats, name='api_dashboard_stats'),
     path('api/dashboard/charts/', views.api_dashboard_charts, name='api_dashboard_charts'),
+    path('api/dashboard/drilldown/', views.api_dashboard_drilldown, name='api_dashboard_drilldown'),
 
     # Inventory
     path('api/inventory/', views.api_get_inventory, name='api_get_inventory'),
