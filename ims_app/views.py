@@ -1,6 +1,7 @@
 import json
 from datetime import datetime, timedelta
 from decimal import Decimal
+from django.db import IntegrityError
 from django.shortcuts import render
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
@@ -166,6 +167,37 @@ def api_dashboard_charts(request):
     # Sort category data by sales descending, keeping categories with sales first
     category_data.sort(key=lambda x: x['sales'], reverse=True)
 
+    # Product sales leaderboard built strictly from recorded bill-item rows.
+    # Refunded bills are excluded from the ranking so returned sales are not counted.
+    leaderboard_rows = (
+        CustomerBillItem.objects
+        .exclude(bill__status='Refunded')
+        .values('variant__product_id', 'variant__product__name', 'variant__product__category__name')
+        .annotate(
+            units_sold=Sum('quantity'),
+            revenue=Sum('line_total'),
+            bill_count=Count('bill_id', distinct=True),
+            entry_count=Count('id'),
+            variant_count=Count('variant_id', distinct=True),
+        )
+    )
+    leaderboard_data = sorted(
+        [
+            {
+                'product_id': row['variant__product_id'],
+                'product_name': row['variant__product__name'] or 'Unnamed product',
+                'category': row['variant__product__category__name'] or 'Uncategorized',
+                'units_sold': float(row['units_sold'] or 0),
+                'revenue': float(row['revenue'] or 0),
+                'bill_count': int(row['bill_count'] or 0),
+                'entry_count': int(row['entry_count'] or 0),
+                'variant_count': int(row['variant_count'] or 0),
+            }
+            for row in leaderboard_rows
+        ],
+        key=lambda item: (-item['revenue'], -item['units_sold'], item['product_name'].lower()),
+    )[:10]
+
     total_bills = CustomerBill.objects.count()
     paid_cnt = CustomerBill.objects.filter(status='Paid').count()
     partial_cnt = CustomerBill.objects.filter(status='Partial').count()
@@ -178,6 +210,7 @@ def api_dashboard_charts(request):
             'bills': bills_list,
         },
         'sales_by_category': category_data,
+        'product_leaderboard': leaderboard_data,
         'payment_methods': {
             'total_methods_count': total_bills,
             'paid_pct': round((paid_cnt / total_bills * 100) if total_bills else 0.0, 1),
@@ -891,7 +924,7 @@ def api_get_customer_bills(request):
         c_collected = bills.aggregate(s=Sum('amount_paid'))['s'] or Decimal('0.00')
         c_out = c_billed - c_collected
         
-        status = 'Cleared' if c_out <= 0 and c_billed > 0 else 'Outstanding'
+        status = 'No Bills' if c_billed == 0 else ('Cleared' if c_out <= 0 else 'Outstanding')
         out.append({
             'customer_id': c.id,
             'customer_name': c.name,
@@ -900,6 +933,7 @@ def api_get_customer_bills(request):
             'collected': float(c_collected),
             'outstanding': float(c_out),
             'bills_count': bills.count(),
+            'payments_count': c.payments.count(),
             'status': status
         })
 
@@ -958,6 +992,17 @@ def api_customer_details(request, cust_id):
             'status': b.status
         })
 
+    payments = customer.payments.all().order_by('-id')
+    p_list = []
+    for payment in payments:
+        p_list.append({
+            'payment_id': payment.id,
+            'date': payment.date.strftime('%d %b %Y'),
+            'bill_number': payment.bill.bill_number if payment.bill else 'General',
+            'amount': float(payment.amount),
+            'remarks': payment.remarks or ''
+        })
+
     tot_billed = bills.aggregate(s=Sum('net_total'))['s'] or Decimal('0.00')
     tot_paid = bills.aggregate(s=Sum('amount_paid'))['s'] or Decimal('0.00')
 
@@ -969,7 +1014,8 @@ def api_customer_details(request, cust_id):
         'total_billed': float(tot_billed),
         'total_collected': float(tot_paid),
         'outstanding': float(tot_billed - tot_paid),
-        'bills': b_list
+        'bills': b_list,
+        'payments': p_list
     })
 
 def api_get_suppliers(request):
@@ -1019,16 +1065,26 @@ def api_update_supplier(request):
 
 @csrf_exempt
 def api_delete_supplier(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        s_id = data.get('supplier_id')
-        try:
-            s = Supplier.objects.get(id=s_id)
-            s.is_active = False
-            s.save()
-            return JsonResponse({'status': 'success'})
-        except Supplier.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Supplier not found'}, status=404)
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+    data = json.loads(request.body)
+    supplier_id = data.get('supplier_id')
+    try:
+        supplier = Supplier.objects.get(id=supplier_id)
+    except Supplier.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Supplier not found'}, status=404)
+
+    batch_count = supplier.batches.count()
+    payment_count = supplier.payments.count()
+    if batch_count or payment_count:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Cannot delete this supplier while it has {batch_count} batch record(s) and {payment_count} payment record(s). Remove those records first.'
+        }, status=409)
+
+    supplier.delete()
+    return JsonResponse({'status': 'success', 'message': 'Supplier deleted permanently'})
 
 def api_get_customers(request):
     customers = Customer.objects.all().order_by('-id')
@@ -1109,53 +1165,90 @@ def api_get_staff(request):
         })
     return JsonResponse({'staff': out})
 
+
 @csrf_exempt
 def api_add_staff(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        name = data.get('name')
-        username = data.get('username')
-        password = data.get('password', '123456')
-        email = data.get('email', '')
-        contact = data.get('contact', '')
-        role = data.get('role', 'Cashier')
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
-        s = StaffUser.objects.create(
-            name=name, username=username, password=password, email=email, contact=contact, role=role
+    data = json.loads(request.body)
+    name = (data.get('name') or '').strip()
+    username = (data.get('username') or '').strip()
+    if not name or not username:
+        return JsonResponse({'status': 'error', 'message': 'Name and username are required'}, status=400)
+
+    role = data.get('role') or 'Cashier'
+    valid_roles = {choice[0] for choice in StaffUser.ROLE_CHOICES}
+    if role not in valid_roles:
+        return JsonResponse({'status': 'error', 'message': 'Invalid staff role'}, status=400)
+
+    try:
+        staff = StaffUser.objects.create(
+            name=name,
+            username=username,
+            password=data.get('password') or '123456',
+            email=(data.get('email') or '').strip(),
+            contact=(data.get('contact') or '').strip(),
+            role=role,
         )
-        return JsonResponse({'status': 'success', 'staff_id': s.id})
+    except IntegrityError:
+        return JsonResponse({'status': 'error', 'message': 'That username is already in use'}, status=409)
+
+    return JsonResponse({'status': 'success', 'staff_id': staff.id})
+
 
 @csrf_exempt
 def api_update_staff(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        s_id = data.get('staff_id')
-        try:
-            s = StaffUser.objects.get(id=s_id)
-            if 'name' in data: s.name = data['name']
-            if 'username' in data: s.username = data['username']
-            if 'email' in data: s.email = data['email']
-            if 'contact' in data: s.contact = data['contact']
-            if 'role' in data: s.role = data['role']
-            if 'password' in data and data['password']: s.password = data['password']
-            if 'is_active' in data: s.is_active = data['is_active']
-            s.save()
-            return JsonResponse({'status': 'success', 'staff_id': s.id})
-        except StaffUser.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Staff member not found'}, status=404)
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+    data = json.loads(request.body)
+    staff_id = data.get('staff_id')
+    if not staff_id:
+        return JsonResponse({'status': 'error', 'message': 'Staff member is required'}, status=400)
+
+    try:
+        staff = StaffUser.objects.get(id=staff_id)
+        if 'name' in data:
+            staff.name = (data.get('name') or '').strip()
+        if 'username' in data:
+            staff.username = (data.get('username') or '').strip()
+        if 'email' in data:
+            staff.email = (data.get('email') or '').strip()
+        if 'contact' in data:
+            staff.contact = (data.get('contact') or '').strip()
+        if 'role' in data and data['role'] in {choice[0] for choice in StaffUser.ROLE_CHOICES}:
+            staff.role = data['role']
+        if data.get('password'):
+            staff.password = data['password']
+        if 'is_active' in data:
+            staff.is_active = bool(data['is_active'])
+        if not staff.name or not staff.username:
+            return JsonResponse({'status': 'error', 'message': 'Name and username are required'}, status=400)
+        staff.save()
+    except StaffUser.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Staff member not found'}, status=404)
+    except IntegrityError:
+        return JsonResponse({'status': 'error', 'message': 'That username is already in use'}, status=409)
+
+    return JsonResponse({'status': 'success', 'staff_id': staff.id})
+
 
 @csrf_exempt
 def api_delete_staff(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        s_id = data.get('staff_id')
-        try:
-            s = StaffUser.objects.get(id=s_id)
-            s.is_active = False
-            s.save()
-            return JsonResponse({'status': 'success'})
-        except StaffUser.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Staff member not found'}, status=404)
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+    data = json.loads(request.body)
+    staff_id = data.get('staff_id')
+    try:
+        staff = StaffUser.objects.get(id=staff_id)
+    except StaffUser.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Staff member not found'}, status=404)
+
+    staff.delete()
+    return JsonResponse({'status': 'success', 'message': 'Staff member deleted'})
+
 
 def api_get_categories(request):
     cats = Category.objects.all().order_by('order_num', 'name')
@@ -1166,51 +1259,96 @@ def api_get_categories(request):
             'name': c.name,
             'order_num': c.order_num,
             'description': c.description or '',
+            'product_count': c.products.count(),
             'status': 'Active' if c.is_active else 'Inactive',
             'is_active': c.is_active,
             'created_at': c.created_at.strftime('%d %b %Y')
         })
     return JsonResponse({'categories': out})
 
+
 @csrf_exempt
 def api_add_category(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        name = data.get('name')
-        order_num = int(data.get('order_num', 1))
-        description = data.get('description', '')
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
 
-        c = Category.objects.create(name=name, order_num=order_num, description=description)
-        return JsonResponse({'status': 'success', 'category_id': c.id})
+    data = json.loads(request.body)
+    name = (data.get('name') or '').strip()
+    if not name:
+        return JsonResponse({'status': 'error', 'message': 'Category name is required'}, status=400)
+
+    try:
+        order_num = int(data.get('order_num', 1))
+    except (TypeError, ValueError):
+        return JsonResponse({'status': 'error', 'message': 'Order must be a whole number'}, status=400)
+
+    try:
+        category = Category.objects.create(
+            name=name,
+            order_num=order_num,
+            description=(data.get('description') or '').strip(),
+        )
+    except IntegrityError:
+        return JsonResponse({'status': 'error', 'message': 'That category already exists'}, status=409)
+
+    return JsonResponse({'status': 'success', 'category_id': category.id})
+
 
 @csrf_exempt
 def api_update_category(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        c_id = data.get('category_id')
-        try:
-            c = Category.objects.get(id=c_id)
-            if 'name' in data: c.name = data['name']
-            if 'order_num' in data: c.order_num = int(data['order_num'])
-            if 'description' in data: c.description = data['description']
-            if 'is_active' in data: c.is_active = data['is_active']
-            c.save()
-            return JsonResponse({'status': 'success', 'category_id': c.id})
-        except Category.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Category not found'}, status=404)
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+    data = json.loads(request.body)
+    category_id = data.get('category_id')
+    if not category_id:
+        return JsonResponse({'status': 'error', 'message': 'Category is required'}, status=400)
+
+    try:
+        category = Category.objects.get(id=category_id)
+        if 'name' in data:
+            category.name = (data.get('name') or '').strip()
+        if 'order_num' in data:
+            category.order_num = int(data['order_num'])
+        if 'description' in data:
+            category.description = (data.get('description') or '').strip()
+        if 'is_active' in data:
+            category.is_active = bool(data['is_active'])
+        if not category.name:
+            return JsonResponse({'status': 'error', 'message': 'Category name is required'}, status=400)
+        category.save()
+    except Category.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Category not found'}, status=404)
+    except (TypeError, ValueError):
+        return JsonResponse({'status': 'error', 'message': 'Order must be a whole number'}, status=400)
+    except IntegrityError:
+        return JsonResponse({'status': 'error', 'message': 'That category already exists'}, status=409)
+
+    return JsonResponse({'status': 'success', 'category_id': category.id})
+
 
 @csrf_exempt
 def api_delete_category(request):
-    if request.method == 'POST':
-        data = json.loads(request.body)
-        c_id = data.get('category_id')
-        try:
-            c = Category.objects.get(id=c_id)
-            c.is_active = False
-            c.save()
-            return JsonResponse({'status': 'success'})
-        except Category.DoesNotExist:
-            return JsonResponse({'status': 'error', 'message': 'Category not found'}, status=404)
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Method not allowed'}, status=405)
+
+    data = json.loads(request.body)
+    category_id = data.get('category_id')
+    try:
+        category = Category.objects.get(id=category_id)
+    except Category.DoesNotExist:
+        return JsonResponse({'status': 'error', 'message': 'Category not found'}, status=404)
+
+    product_count = category.products.count()
+    if product_count:
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Cannot delete this category while {product_count} product(s) use it. Reassign or remove those products first.'
+        }, status=409)
+
+    category.delete()
+    return JsonResponse({'status': 'success', 'message': 'Category deleted'})
+
 
 def api_get_reorder_items(request):
     low_stock_variants = ProductVariant.objects.filter(is_active=True, stock_quantity__lte=F('reorder_level')).select_related('product')

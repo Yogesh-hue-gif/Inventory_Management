@@ -146,7 +146,35 @@ a { color: var(--accent-blue); text-decoration: none; }
 .login-header p { font-size: 13px; color: #94a3b8; margin-top: 4px; margin-bottom: 20px; }
 
 /* APP LAYOUT */
-#app { display: flex; width: 100vw; min-height: 100vh; }
+#app { display: flex; width: 100%; min-height: 100vh; }
+
+/* MOBILE NAV TRIGGER + DRAWER BACKDROP (hidden on desktop) */
+.btn-mobile-nav {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-main);
+  font-size: 17px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.btn-mobile-nav:hover { background: var(--bg-hover); }
+.btn-mobile-nav:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 15, 25, 0.55);
+  backdrop-filter: blur(2px);
+  z-index: 95;
+}
 
 /* SIDEBAR (Dark Navy - Matching PDF Screenshots) */
 .sidebar {
@@ -270,12 +298,36 @@ a { color: var(--accent-blue); text-decoration: none; }
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
+  gap: 12px;
   position: sticky;
   top: 0;
   z-index: 90;
 }
-.top-title { font-size: 16px; font-weight: 700; color: #111827; }
-.top-actions { display: flex; align-items: center; gap: 12px; }
+.top-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.top-actions { display: flex; align-items: center; gap: 12px; min-width: 0; }
+
+/* SECTION HEADER (title + action buttons row) */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.page-header-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
 
 .btn-top-refresh {
   padding: 6px 12px;
@@ -380,7 +432,12 @@ a { color: var(--accent-blue); text-decoration: none; }
 /* DATA TABLES (Dark Blue Table Header Bar - Matching PDF) */
 .table-container {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
   overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
   border-radius: var(--radius-md);
   border: 1px solid var(--border-color);
   background: #ffffff;
@@ -403,6 +460,11 @@ a { color: var(--accent-blue); text-decoration: none; }
   color: #1f2937;
 }
 .data-table tbody tr:hover { background: #f9fafb; }
+
+/* RESPONSIVE GRID HELPERS (base = current desktop behaviour, see media queries below) */
+.resp-grid-2, .resp-grid-4, .resp-grid-3, .resp-grid-modal { min-width: 0; }
+.resp-grid-2 > *, .resp-grid-4 > *, .resp-grid-3 > *, .resp-grid-modal > * { min-width: 0; }
+.modal-body [style*="display: grid"] > * { min-width: 0; }
 
 /* BADGES */
 .badge {
@@ -606,4 +668,161 @@ a { color: var(--accent-blue); text-decoration: none; }
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
+   RESPONSIVE LAYER
+   Breakpoints:
+     1400px  Small laptops / large tablets (stat cards stop being 6-up)
+     1280px  POS checkout panel narrows
+     1150px  Stat cards go 3-up
+     1024px  Sidebar becomes an off-canvas drawer, two-column rows collapse
+      860px  Stat cards go 2-up
+      768px  Mobile: modals fill width, tables scroll, toolbars stack
+      560px  Four-up rows go 2-up, POS grand-total bar stacks
+      480px  Stat cards go 1-up, chrome tightens
+   ========================================================================== */
+
+/* ---- <= 1400px : 6-up stat rows become 4-up ---- */
+@media (max-width: 1400px) {
+  .stats-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+}
+
+/* ---- <= 1280px : narrow the POS checkout rail, shorter chart cards ---- */
+@media (max-width: 1280px) {
+  .pos-layout { grid-template-columns: minmax(0, 1fr) 320px; }
+  [style*="height: 280px"] { height: 240px !important; }
+}
+
+/* ---- <= 1150px : 4-up stat rows become 3-up ---- */
+@media (max-width: 1150px) {
+  .stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+
+/* ---- <= 1024px : sidebar becomes an off-canvas drawer ---- */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 260px !important;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    box-shadow: none;
+  }
+  #app.sidebar-open .sidebar {
+    transform: translateX(0);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
+  }
+  #app.sidebar-open .sidebar-backdrop { display: block; }
+  body.sidebar-locked { overflow: hidden; }
+
+  .main-wrapper,
+  #app.sidebar-collapsed .main-wrapper { margin-left: 0 !important; }
+  .main-wrapper { width: 100%; }
+
+  /* The drawer is always full-width, so ignore the desktop collapsed state */
+  #app.sidebar-collapsed .sidebar { width: 260px !important; }
+  #app.sidebar-collapsed .brand-logo span,
+  #app.sidebar-collapsed .nav-link span,
+  #app.sidebar-collapsed .sidebar-footer span,
+  #app.sidebar-collapsed #settings-arrow-icon { display: inline !important; }
+  #app.sidebar-collapsed .nav-link { justify-content: flex-start; padding: 9px 12px; }
+  #app.sidebar-collapsed .brand-logo { justify-content: flex-start; }
+  #app.sidebar-collapsed .sidebar-header { padding: 16px 20px; justify-content: space-between; }
+
+  .sidebar-collapse-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-md);
+    flex: 0 0 auto;
+  }
+  .sidebar-collapse-btn:hover { background: var(--bg-sidebar-hover); }
+  .btn-mobile-nav { display: inline-flex; }
+
+  .page-view { padding: 16px; }
+  .pos-layout { grid-template-columns: minmax(0, 1fr); }
+  .pos-cart-panel { min-height: 0; }
+
+  /* Two-up dashboard/return rows and four-up summary rows */
+  .resp-grid-2 { grid-template-columns: minmax(0, 1fr) !important; }
+  .resp-grid-4 { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+/* ---- <= 860px : stat cards go 2-up ---- */
+@media (max-width: 860px) {
+  .stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+
+/* ---- <= 768px : mobile ergonomics ---- */
+@media (max-width: 768px) {
+  .page-view { padding: 14px 12px; }
+  .top-navbar { padding: 0 12px; gap: 8px; }
+  .top-title { font-size: 15px; }
+  .user-badge { gap: 6px; }
+
+  .card-box { padding: 14px 14px; }
+  .stats-grid, .resp-grid-2, .resp-grid-4, .resp-grid-3, .resp-grid-modal { gap: 10px !important; }
+  .resp-grid-3, .resp-grid-modal { grid-template-columns: minmax(0, 1fr) !important; }
+  [style*="min-height: 560px"] { min-height: auto !important; }
+  .stat-card { padding: 12px 12px; }
+  .stat-val { font-size: 18px; }
+
+  /* Toolbars, filter bars and card headers stack instead of overflowing */
+  .page-view div[style*="display: flex"] { flex-wrap: wrap; }
+  .page-view div[style*="display: flex"] > [style*="max-width"] { max-width: 100% !important; }
+  /* Search boxes get their own line so filter pills can't squeeze them */
+  .page-view div[style*="display: flex"] > [style*="position: relative"] { flex: 1 1 100% !important; }
+  .page-view [style*="flex: 1"] { min-width: 0; }
+
+  /* iOS zooms the viewport when focusing inputs below 16px */
+  .form-control, input, select, textarea { font-size: 16px !important; }
+
+  .data-table { min-width: 420px; }
+  .data-table th { padding: 9px 10px; }
+  .data-table td { padding: 9px 10px; }
+
+  .modal-overlay { padding: 10px; }
+  .modal-content { width: 100%; max-height: 88vh; }
+  .modal-body { padding: 14px 14px; }
+  .modal-header { padding: 12px 14px; }
+  .modal-footer { flex-wrap: wrap; padding: 10px 14px; }
+  .modal-footer .btn { flex: 1 1 auto; justify-content: center; }
+
+  .login-screen { padding: 14px; align-items: flex-start; overflow-y: auto; }
+  .login-card { padding: 26px 20px; }
+  .login-header h1 { font-size: 20px; }
+}
+
+/* ---- <= 560px : phones ---- */
+@media (max-width: 560px) {
+  .resp-grid-4 { grid-template-columns: minmax(0, 1fr) !important; }
+  [style*="height: 280px"] { height: 210px !important; }
+
+  .page-header-actions { width: 100%; }
+  .page-header-actions .btn { flex: 1 1 auto; justify-content: center; }
+  .btn { padding: 8px 12px; }
+  .pos-layout { gap: 12px; }
+  .customer-type-toggle { flex-wrap: wrap; }
+  .badge { font-size: 10px; }
+}
+
+/* ---- <= 480px : small phones ---- */
+@media (max-width: 480px) {
+  .stats-grid { grid-template-columns: minmax(0, 1fr) !important; }
+  .page-view { padding: 12px 10px; }
+  .top-navbar { padding: 0 8px; }
+  .user-badge-text { display: none; }
+  .stat-icon-logo { width: 28px; height: 28px; font-size: 13px; right: 10px; top: 10px; }
+  .qty-stepper input { width: 44px; }
+  .modal-content { border-radius: var(--radius-sm); }
+  .login-screen { padding: 8px; }
+  .login-card { padding: 20px 14px; }
+}
+
+/* ---- Print & short landscape windows keep the compact desktop density ---- */
+@media (max-height: 520px) and (min-width: 768px) {
+  .login-screen { align-items: flex-start; overflow-y: auto; }
+  .nav-menu { padding: 8px 10px; }
+  .nav-link { padding: 7px 12px; }
 }

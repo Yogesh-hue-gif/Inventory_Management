@@ -25,7 +25,7 @@
     <div class="modal-body" style="padding: 20px; max-height: calc(85vh - 70px); overflow-y: auto;">
       
       <!-- Top Grid: Batch Info & Payment Summary -->
-      <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 16px;">
+      <div class="resp-grid-modal" style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; margin-bottom: 16px;">
         
         <!-- Card 1: Batch Information -->
         <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px;">
@@ -33,7 +33,7 @@
             <i class="fa-solid fa-file-lines" style="color: #64748b; font-size: 14px;"></i>
             <h4 style="margin: 0; font-size: 13px; font-weight: 700; color: #0f172a;">Batch Information</h4>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div class="resp-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
             <div class="form-group" style="margin-bottom: 0;">
               <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Batch Name *</label>
               <input type="text" id="batch-name-input" class="form-control" placeholder="e.g. July Import 2025" style="border-radius: 6px; font-size: 13px;">
@@ -120,7 +120,7 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+        <div class="resp-grid-4" style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 10px;">
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Size</label>
             <input type="text" id="batch-size-input" class="form-control" placeholder="Auto-filled" readonly style="background: #f8fafc; color: #64748b; border-radius: 6px;">
@@ -139,7 +139,7 @@
           </div>
         </div>
 
-        <div style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 10px; align-items: flex-end;">
+        <div class="resp-grid-3" style="display: grid; grid-template-columns: 1fr 1.2fr 1fr; gap: 10px; align-items: flex-end;">
           <div class="form-group" style="margin-bottom: 0;">
             <label class="form-label" style="font-size: 11px; font-weight: 700; color: #475569;">Cost Price *</label>
             <input type="number" id="batch-cost-input" onkeyup="onBatchQtyOrCostChange()" onchange="onBatchQtyOrCostChange()" class="form-control" value="0" step="0.01" style="border-radius: 6px; font-size: 13px;">

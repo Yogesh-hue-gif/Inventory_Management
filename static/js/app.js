@@ -8,12 +8,15 @@ let quotationCart = [];
 let batchCart = [];
 let returnSelectedItems = [];
 let currentReturnBill = null;
+let lastCreatedBill = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initApp();
 });
 
 function initApp() {
+  lastLayoutWasMobile = isMobileLayout();
+  syncSidebarIcons();
   setupEventListeners();
   checkAuth();
 }
@@ -25,6 +28,7 @@ function checkAuth() {
 }
 
 function showLoginScreen() {
+  closeMobileDrawer();
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
 }
@@ -66,6 +70,29 @@ function setupEventListeners() {
     });
   });
 
+  // Any sidebar link (including the Settings sub-menu) closes the mobile drawer
+  const navMenu = document.querySelector('.nav-menu');
+  if (navMenu) {
+    navMenu.addEventListener('click', (e) => {
+      if (e.target.closest('.nav-link')) closeMobileDrawer();
+    });
+  }
+
+  // Mobile navigation drawer trigger
+  const mobileNavBtn = document.getElementById('btn-mobile-nav');
+  if (mobileNavBtn) {
+    mobileNavBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleMobileDrawer();
+    });
+  }
+
+  // Tapping the dimmed backdrop closes the mobile drawer
+  const sidebarBackdrop = document.getElementById('sidebar-backdrop');
+  if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener('click', () => closeMobileDrawer());
+  }
+
   // Top Refresh button
   const topRefreshBtn = document.getElementById('btn-top-refresh');
   if (topRefreshBtn) {
@@ -81,11 +108,12 @@ function setupEventListeners() {
 
   // Global Keydown Listeners (Enter for modal submit, Esc to close modal, Alt Shortcuts)
   document.addEventListener('keydown', (e) => {
-    // 1. Esc Key -> close any active overlay modal
+    // 1. Esc Key -> close any active overlay modal / the mobile drawer
     if (e.key === 'Escape') {
       document.querySelectorAll('.modal-overlay.active').forEach(modal => {
         modal.classList.remove('active');
       });
+      closeMobileDrawer();
       return;
     }
 
@@ -128,16 +156,113 @@ function setupEventListeners() {
   }
 }
 
-function toggleSidebarCollapse() {
+/* ---------------------------------------------------------------------------
+   RESPONSIVE LAYOUT HELPERS
+   <= 1024px the fixed sidebar becomes an off-canvas drawer driven by the
+   hamburger button in the top navbar. Above that width the original
+   collapse/expand behaviour applies.
+   --------------------------------------------------------------------------- */
+const MOBILE_LAYOUT_QUERY = '(max-width: 1024px)';
+
+function isMobileLayout() {
+  return window.matchMedia(MOBILE_LAYOUT_QUERY).matches;
+}
+
+function openMobileDrawer() {
   const app = document.getElementById('app');
-  const icon = document.getElementById('sidebar-toggle-icon');
+  if (!app || !isMobileLayout()) return;
+  app.classList.add('sidebar-open');
+  document.body.classList.add('sidebar-locked');
+  const trigger = document.getElementById('btn-mobile-nav');
+  if (trigger) trigger.setAttribute('aria-expanded', 'true');
+  syncSidebarIcons();
+}
+
+function closeMobileDrawer() {
+  const app = document.getElementById('app');
   if (!app) return;
-  app.classList.toggle('sidebar-collapsed');
-  const isCollapsed = app.classList.contains('sidebar-collapsed');
-  if (icon) {
-    icon.className = isCollapsed ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left';
+  app.classList.remove('sidebar-open');
+  document.body.classList.remove('sidebar-locked');
+  const trigger = document.getElementById('btn-mobile-nav');
+  if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  syncSidebarIcons();
+}
+
+function toggleMobileDrawer() {
+  const app = document.getElementById('app');
+  if (!app) return;
+  if (app.classList.contains('sidebar-open')) {
+    closeMobileDrawer();
+  } else {
+    openMobileDrawer();
   }
 }
+
+// Keeps the hamburger (navbar) and the sidebar button in sync with the layout
+function syncSidebarIcons() {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  const isOpen = app.classList.contains('sidebar-open');
+  const isCollapsed = app.classList.contains('sidebar-collapsed');
+
+  const mobileNavIcon = document.getElementById('mobile-nav-icon');
+  if (mobileNavIcon) {
+    mobileNavIcon.className = isOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+  }
+
+  const sidebarIcon = document.getElementById('sidebar-toggle-icon');
+  if (sidebarIcon) {
+    if (isMobileLayout()) {
+      // Inside the drawer the same button doubles as the close control
+      sidebarIcon.className = isOpen ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+    } else {
+      sidebarIcon.className = isCollapsed ? 'fa-solid fa-chevron-right' : 'fa-solid fa-chevron-left';
+    }
+  }
+}
+
+function toggleSidebarCollapse() {
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  if (isMobileLayout()) {
+    toggleMobileDrawer();
+    return;
+  }
+
+  app.classList.toggle('sidebar-collapsed');
+  syncSidebarIcons();
+}
+
+// Keep the layout correct when the window is resized or a device is rotated
+let lastLayoutWasMobile = null;
+function handleResponsiveLayoutChange() {
+  const mobile = isMobileLayout();
+  if (lastLayoutWasMobile === null) {
+    lastLayoutWasMobile = mobile;
+    return;
+  }
+  if (mobile === lastLayoutWasMobile) return;
+  lastLayoutWasMobile = mobile;
+
+  const app = document.getElementById('app');
+  if (!app) return;
+
+  if (mobile) {
+    // The desktop collapse state has no meaning for the drawer
+    app.classList.remove('sidebar-collapsed');
+  }
+  // Never keep the drawer open or the page scroll-locked across a breakpoint
+  app.classList.remove('sidebar-open');
+  document.body.classList.remove('sidebar-locked');
+  const trigger = document.getElementById('btn-mobile-nav');
+  if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  syncSidebarIcons();
+}
+
+window.addEventListener('resize', handleResponsiveLayoutChange);
+window.addEventListener('orientationchange', handleResponsiveLayoutChange);
 
 function toggleSettingsSubmenu() {
   const submenu = document.getElementById('settings-submenu');
@@ -149,7 +274,6 @@ function toggleSettingsSubmenu() {
       arrowIcon.style.transform = isHidden ? 'rotate(90deg)' : 'rotate(0deg)';
     }
     if (isHidden) {
-      navigate('settings');
       navigateSettingsTab('staff');
     }
   }
@@ -157,17 +281,24 @@ function toggleSettingsSubmenu() {
 
 
 function navigateSettingsTab(tabName) {
-  navigate('settings');
+  if (currentView !== 'settings') {
+    navigate('settings');
+  }
+  showSettingsTab(tabName);
+}
+
+function showSettingsTab(tabName) {
+  const activeTab = ['staff', 'categories', 'reorder'].includes(tabName) ? tabName : 'staff';
   const submenu = document.getElementById('settings-submenu');
   if (submenu) submenu.style.display = 'block';
 
-  document.getElementById('settings-tab-staff').style.display = tabName === 'staff' ? 'block' : 'none';
-  document.getElementById('settings-tab-categories').style.display = tabName === 'categories' ? 'block' : 'none';
-  document.getElementById('settings-tab-reorder').style.display = tabName === 'reorder' ? 'block' : 'none';
+  document.getElementById('settings-tab-staff').style.display = activeTab === 'staff' ? 'block' : 'none';
+  document.getElementById('settings-tab-categories').style.display = activeTab === 'categories' ? 'block' : 'none';
+  document.getElementById('settings-tab-reorder').style.display = activeTab === 'reorder' ? 'block' : 'none';
 
-  if (tabName === 'staff') loadStaff();
-  if (tabName === 'categories') loadCategories();
-  if (tabName === 'reorder') loadReorderItems();
+  if (activeTab === 'staff') loadStaff();
+  if (activeTab === 'categories') loadCategories();
+  if (activeTab === 'reorder') loadReorderItems();
 }
 
 function navigate(viewName) {
@@ -241,7 +372,7 @@ function loadViewData(viewName) {
       loadCustomers();
       break;
     case 'settings':
-      navigateSettingsTab('staff');
+      showSettingsTab('staff');
       break;
   }
 }
@@ -366,6 +497,7 @@ async function loadDashboard() {
 
     renderSalesTrendChart(chartData.sales_trend);
     renderCategorySalesList(chartData.sales_by_category);
+    renderProductLeaderboard(chartData.product_leaderboard || []);
     renderPaymentMethodsChart(chartData.payment_methods);
 
   } catch (err) {
@@ -523,6 +655,32 @@ function renderCategorySalesList(categories) {
 }
 
 
+
+function renderProductLeaderboard(rows) {
+  const tbody = document.getElementById('product-leaderboard-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">No product sales records yet</td></tr>';
+    return;
+  }
+
+  rows.forEach((row, index) => {
+    const medalColors = ['#f59e0b', '#94a3b8', '#b45309'];
+    const rankColor = medalColors[index] || '#64748b';
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><span class="badge" style="background:${rankColor}20;color:${rankColor};font-weight:800;">#${index + 1}</span></td>
+      <td><div style="font-weight:700;color:#111827;">${escapeSettingsHtml(row.product_name)}</div><div style="font-size:11px;color:#94a3b8;">${Number(row.variant_count || 0)} variant(s)</div></td>
+      <td>${escapeSettingsHtml(row.category)}</td>
+      <td>${Number(row.units_sold || 0).toLocaleString()}</td>
+      <td style="font-weight:700;color:#0f172a;">Rs ${Number(row.revenue || 0).toLocaleString()}</td>
+      <td>${Number(row.bill_count || 0)}</td>
+      <td>${Number(row.entry_count || 0)}</td>`;
+    tbody.appendChild(tr);
+  });
+}
 
 function renderPaymentMethodsChart(pmData) {
   const pPaid = document.getElementById('pm-paid-pct');
@@ -1956,37 +2114,47 @@ function printCurrentQuotationDraft() {
   printQuotationByNumber(mockQ.quotation_number);
 }
 
-async function loadQuotationIntoPOS(qNum) {
-  try {
-    const res = await fetch(`/api/pos/quotation/${qNum}/`);
-    const data = await res.json();
-    if (data.quotation_number) {
-      navigate('pos');
-      posCart = [];
-      data.items.forEach(it => {
-        posCart.push({
-          id: it.variant_id,
-          name: it.product_name,
-          size: it.size,
-          unit: it.unit,
-          price: it.unit_price,
-          qty: it.quantity
-        });
-      });
-      
-      const qRefInput = document.getElementById('pos-quotation-ref-input');
-      if (qRefInput) qRefInput.value = data.quotation_number;
-      
-      const custInput = document.getElementById('pos-customer-input');
-      if (custInput) custInput.value = data.customer_name;
+async function loadQuotationIntoPOS(quotationNumber = null) {
+  const input = document.getElementById('pos-quotation-input');
+  const qNum = String(quotationNumber || input?.value || '').trim();
+  if (!qNum) {
+    alert('Enter a quotation number first.');
+    return;
+  }
 
-      renderPOSCart();
-      alert(`Quotation ${qNum} loaded into POS! Click "Complete Sale & Print Bill" to finalize.`);
-    } else {
-      alert('Quotation not found');
+  try {
+    const response = await fetch(`/api/pos/quotation/${encodeURIComponent(qNum)}/`);
+    const data = await response.json();
+    if (!response.ok || !data.quotation_number) {
+      throw new Error(data.message || 'Quotation not found');
     }
-  } catch (err) {
-    console.error(err);
+    if (currentView !== 'pos') navigate('pos');
+
+    posCart = (Array.isArray(data.items) ? data.items : []).map(item => ({
+      id: Number(item.variant_id),
+      name: item.product_name,
+      size: item.size,
+      unit: item.unit,
+      price: Number(item.unit_price || 0),
+      qty: Number(item.quantity || 0)
+    }));
+
+    if (input) input.value = data.quotation_number;
+    const qRefInput = document.getElementById('pos-quotation-ref-input');
+    if (qRefInput) qRefInput.value = data.quotation_number;
+    const customerInput = document.getElementById('pos-customer-input');
+    if (customerInput) customerInput.value = data.customer_name || 'Walk-in Customer';
+
+    const banner = document.getElementById('pos-loaded-quo-banner');
+    const bannerText = document.getElementById('pos-loaded-quo-text');
+    if (bannerText) bannerText.textContent = `✓ ${data.quotation_number} — ${data.customer_name || 'Walk-in Customer'}`;
+    if (banner) banner.style.display = 'flex';
+
+    renderPOSCart();
+    alert(`Quotation ${data.quotation_number} loaded: ${posCart.length} product(s) added to the cart.`);
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'Unable to load quotation');
   }
 }
 
@@ -2048,6 +2216,10 @@ function renderPOSCart() {
   if (posCart.length === 0) {
     tbody.innerHTML = '';
     if (emptyMsg) emptyMsg.style.display = 'block';
+    setBillText('pos-summary-items-cnt', '0');
+    setBillText('pos-summary-subtotal', 'Rs 0');
+    setBillText('pos-grand-total-label', 'Rs. 0');
+    setBillText('pos-summary-net-total', 'Rs 0');
   } else {
     if (emptyMsg) emptyMsg.style.display = 'none';
     tbody.innerHTML = '';
@@ -2123,75 +2295,122 @@ function setPOSExactAmount() {
   document.getElementById('pos-cash-input').value = netTotal;
 }
 
-function loadQuotationIntoPOS() {
-  const quoNo = document.getElementById('pos-quotation-input').value.trim();
-  if (!quoNo) return;
-
-  const banner = document.getElementById('pos-loaded-quo-banner');
-  document.getElementById('pos-loaded-quo-text').innerText = `✓ ${quoNo} — Walk-In Customer`;
-  if (banner) banner.style.display = 'flex';
-}
-
 function clearLoadedQuotationInPOS() {
   const banner = document.getElementById('pos-loaded-quo-banner');
   if (banner) banner.style.display = 'none';
-  document.getElementById('pos-quotation-input').value = '';
+  const input = document.getElementById('pos-quotation-input');
+  if (input) input.value = '';
+  const qRefInput = document.getElementById('pos-quotation-ref-input');
+  if (qRefInput) qRefInput.value = '';
 }
 
-function submitCreatePOSBill() {
+async function submitCreatePOSBill() {
   if (posCart.length === 0) {
     alert('Cart is empty! Add products first.');
     return;
   }
-  const custName = document.getElementById('pos-customer-input') ? document.getElementById('pos-customer-input').value.trim() || 'Walk-in Customer' : 'Walk-in Customer';
-  const qRef = document.getElementById('pos-quotation-ref-input') ? document.getElementById('pos-quotation-ref-input').value.trim() : '';
-  const discountPct = parseFloat(document.getElementById('pos-discount-input').value) || 0;
-  const cashRec = parseFloat(document.getElementById('pos-cash-input').value) || 0;
+  const customerInput = document.getElementById('pos-customer-input');
+  const customerName = customerInput?.value.trim() || 'Walk-in Customer';
+  const quotationInput = document.getElementById('pos-quotation-ref-input');
+  const quotationNumber = quotationInput?.value.trim() || '';
+  const discountPercent = Number(document.getElementById('pos-discount-input')?.value || 0);
+  const cashReceived = Number(document.getElementById('pos-cash-input')?.value || 0);
+  const items = posCart.map(item => ({ variant_id: item.id, quantity: item.qty, unit_price: item.price }));
+  const subtotal = posCart.reduce((total, item) => total + (item.qty * item.price), 0);
+  const discount = (subtotal * discountPercent) / 100;
+  const netTotal = Math.max(subtotal - discount, 0);
 
-  const subtotal = posCart.reduce((s, i) => s + (i.qty * i.price), 0);
-  const discountAmt = (subtotal * discountPct) / 100;
-
-  fetch('/api/pos/sell/', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      customer_name: custName,
-      quotation_number: qRef,
-      overall_discount: discountAmt,
-      cash_received: cashRec,
-      items: posCart.map(i => ({ variant_id: i.id, quantity: i.qty, unit_price: i.price }))
-    })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data.status === 'success') {
-      const msg = `✓ Bill ${data.bill_number} ban gaya! Ab Print Bill dabao.`;
-      const alertEl = document.getElementById('pos-success-alert-text');
-      if (alertEl) alertEl.innerText = msg;
-      const alertBanner = document.getElementById('pos-success-alert-banner');
-      if (alertBanner) alertBanner.style.display = 'flex';
-
-      const lastBillRef = document.getElementById('pos-last-bill-ref');
-      if (lastBillRef) {
-        lastBillRef.innerHTML = `✓ Last Bill: <strong>${data.bill_number}</strong>`;
-        lastBillRef.style.display = 'block';
-      }
-
-      alert(msg);
-      posCart = [];
-      renderPOSCart();
-    } else {
-      alert('Error: ' + (data.message || 'Could not create bill'));
+  try {
+    const response = await fetch('/api/pos/sell/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        customer_name: customerName,
+        quotation_number: quotationNumber,
+        overall_discount: discount,
+        cash_received: cashReceived,
+        items
+      })
+    });
+    const data = await response.json();
+    if (!response.ok || data.status !== 'success') {
+      throw new Error(data.message || 'Could not create bill');
     }
-  })
-  .catch(err => {
-    console.error('Error creating POS bill:', err);
-    alert('Failed to connect to server');
-  });
+
+    const savedBill = {
+      bill_number: data.bill_number,
+      date: new Date().toLocaleDateString(),
+      customer_name: customerName,
+      quotation_number: quotationNumber,
+      items: posCart.map(item => ({ name: item.name, size: item.size, unit: item.unit, qty: item.qty, price: item.price })),
+      subtotal,
+      discount,
+      net_total: netTotal,
+      cash_received: cashReceived,
+      change: Math.max(cashReceived - netTotal, 0)
+    };
+    lastCreatedBill = savedBill;
+    downloadBillFile(savedBill);
+
+    const message = `Bill ${data.bill_number} saved and downloaded.`;
+    const alertText = document.getElementById('pos-success-alert-text');
+    if (alertText) alertText.textContent = message;
+    const alertBanner = document.getElementById('pos-success-alert-banner');
+    if (alertBanner) alertBanner.style.display = 'flex';
+    const lastBillRef = document.getElementById('pos-last-bill-ref');
+    if (lastBillRef) {
+      lastBillRef.innerHTML = `✓ Last Bill: <strong>${escapeBillHtml(data.bill_number)}</strong>`;
+      lastBillRef.style.display = 'block';
+    }
+
+    posCart = [];
+    clearLoadedQuotationInPOS();
+    renderPOSCart();
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'Failed to create bill');
+  }
+}
+
+function buildBillHtml(bill) {
+  const rows = (bill.items || []).map(item => `<tr><td>${escapeBillHtml(item.name)}<br><small>${escapeBillHtml(item.size || '')} • ${escapeBillHtml(item.unit || '')}</small></td><td>${Number(item.qty).toLocaleString()}</td><td>Rs ${Number(item.price).toLocaleString()}</td><td>Rs ${(Number(item.qty) * Number(item.price)).toLocaleString()}</td></tr>`).join('');
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${escapeBillHtml(bill.bill_number)}</title><style>body{font-family:Arial,sans-serif;color:#111827;margin:32px}header{display:flex;justify-content:space-between;border-bottom:3px solid #111827;padding-bottom:16px}h1{margin:0;font-size:24px}.muted{color:#64748b;font-size:12px}table{width:100%;border-collapse:collapse;margin-top:24px}th,td{text-align:left;padding:10px;border-bottom:1px solid #e5e7eb}th{background:#f1f5f9}.totals{width:300px;margin:20px 0 0 auto}.totals div{display:flex;justify-content:space-between;padding:6px}.grand{font-size:18px;font-weight:700;border-top:2px solid #111827;margin-top:6px;padding-top:10px!important}footer{text-align:center;margin-top:40px;color:#64748b;font-size:12px}@media print{body{margin:0}}</style></head><body><header><div><h1>DevInfantary POS</h1><div class="muted">Customer Bill</div></div><div><strong>${escapeBillHtml(bill.bill_number)}</strong><br><span class="muted">${escapeBillHtml(bill.date || new Date().toLocaleDateString())}</span></div></header><p><strong>Customer:</strong> ${escapeBillHtml(bill.customer_name)}</p>${bill.quotation_number ? `<p class="muted">Quotation: ${escapeBillHtml(bill.quotation_number)}</p>` : ''}<table><thead><tr><th>Product</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table><div class="totals"><div><span>Subtotal</span><strong>Rs ${Number(bill.subtotal).toLocaleString()}</strong></div><div><span>Discount</span><strong>Rs ${Number(bill.discount).toLocaleString()}</strong></div><div class="grand"><span>Total</span><span>Rs ${Number(bill.net_total).toLocaleString()}</span></div><div><span>Cash received</span><span>Rs ${Number(bill.cash_received).toLocaleString()}</span></div><div><span>Change</span><span>Rs ${Number(bill.change).toLocaleString()}</span></div></div><footer>Thank you for your business.</footer></body></html>`;
+}
+
+function downloadBillFile(bill, filename = null) {
+  if (!bill) {
+    alert('Create a bill before downloading.');
+    return;
+  }
+  const blob = new Blob([buildBillHtml(bill)], { type: 'text/html;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename || `${bill.bill_number || 'bill'}.html`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function downloadPOSBill() {
+  downloadBillFile(lastCreatedBill);
 }
 
 function printPOSBill() {
-  window.print();
+  if (!lastCreatedBill) {
+    window.print();
+    return;
+  }
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Allow pop-ups to print the bill.');
+    return;
+  }
+  printWindow.document.write(buildBillHtml(lastCreatedBill));
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 250);
 }
 
 /* =========================================================
@@ -2380,60 +2599,158 @@ function submitProcessReturn() {
    7. SUPPLIER BILLS VIEW (Matching project_IVM.pdf Page 13-15)
 ========================================================= */
 let allSupplierBillsData = [];
+let supplierBillsFilter = 'all';
+let supplierBillsSearch = '';
+
+function escapeBillHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+  }[character]));
+}
+
+function setBillText(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = value;
+}
 
 async function loadSupplierBills() {
   try {
-    const res = await fetch('/api/supplier-bills/');
-    const data = await res.json();
-    allSupplierBillsData = data.suppliers;
-    renderSupplierBillsTable(allSupplierBillsData);
-  } catch (err) {
-    console.error(err);
+    const response = await fetch('/api/supplier-bills/');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    allSupplierBillsData = Array.isArray(data.suppliers) ? data.suppliers : [];
+    setBillText('supp-tot-suppliers', data.total_suppliers ?? allSupplierBillsData.length);
+    setBillText('supp-tot-billed', `Rs ${Number(data.total_billed || 0).toLocaleString()}`);
+    setBillText('supp-tot-paid', `Rs ${Number(data.total_paid || 0).toLocaleString()}`);
+    setBillText('supp-tot-pending', `Rs ${Number(data.total_pending || 0).toLocaleString()}`);
+    applySupplierBillsFilters();
+  } catch (error) {
+    console.error(error);
+    const tbody = document.getElementById('supplier-bills-body');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">Unable to load supplier bills.</td></tr>';
   }
+}
+
+function applySupplierBillsFilters() {
+  const query = supplierBillsSearch.trim().toLowerCase();
+  const filtered = allSupplierBillsData.filter(supplier => {
+    const status = String(supplier.status || '').toLowerCase();
+    const matchesStatus = supplierBillsFilter === 'all' || status === supplierBillsFilter;
+    const searchable = [supplier.supplier_name, supplier.supplier_id].filter(Boolean).join(' ').toLowerCase();
+    return matchesStatus && (!query || searchable.includes(query));
+  });
+
+  document.querySelectorAll('[data-supplier-bill-filter]').forEach(button => {
+    button.classList.toggle('active', button.dataset.supplierBillFilter === supplierBillsFilter);
+  });
+  renderSupplierBillsTable(filtered);
+}
+
+function filterSupplierBillsTab(filter) {
+  supplierBillsFilter = ['all', 'completed', 'partial', 'pending'].includes(filter) ? filter : 'all';
+  applySupplierBillsFilters();
+}
+
+function filterSupplierBillsSearch(value) {
+  supplierBillsSearch = value;
+  applySupplierBillsFilters();
 }
 
 function renderSupplierBillsTable(suppliers) {
   const tbody = document.getElementById('supplier-bills-body');
   if (!tbody) return;
   tbody.innerHTML = '';
-  document.getElementById('supp-bills-count-label').innerText = `${suppliers.length} suppliers`;
+  setBillText('supp-bills-count-label', `${suppliers.length} supplier${suppliers.length === 1 ? '' : 's'}`);
 
-  suppliers.forEach(s => {
-    let badgeClass = 'badge-success';
-    if (s.status === 'Partial') badgeClass = 'badge-warning';
-    if (s.status === 'Pending') badgeClass = 'badge-danger';
+  if (suppliers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:32px;">No suppliers match the selected filters.</td></tr>';
+    return;
+  }
 
-    const firstChar = s.supplier_name.charAt(0).toUpperCase();
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
+  suppliers.forEach(supplier => {
+    const status = String(supplier.status || 'Pending');
+    const badgeClass = status === 'Completed' ? 'badge-success' : status === 'Partial' ? 'badge-warning' : 'badge-danger';
+    const firstChar = String(supplier.supplier_name || '?').charAt(0).toUpperCase();
+    const row = document.createElement('tr');
+    row.innerHTML = `
       <td>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 24px; height: 24px; background: #2563eb; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">${firstChar}</div>
-          <span style="font-weight: 700; color: #111827;">${s.supplier_name}</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:24px;height:24px;background:#2563eb;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${escapeBillHtml(firstChar)}</div>
+          <span style="font-weight:700;color:#111827;">${escapeBillHtml(supplier.supplier_name)}</span>
         </div>
       </td>
-      <td style="font-weight: 600;">Rs ${s.total_billed.toLocaleString()}</td>
-      <td>Rs ${s.paid.toLocaleString()}</td>
-      <td style="color: var(--accent-rose); font-weight: 600;">Rs ${s.remaining.toLocaleString()}</td>
-      <td>${s.batches_count || 4}</td>
-      <td><span class="badge ${badgeClass}">● ${s.status}</span></td>
+      <td style="font-weight:600;">Rs ${Number(supplier.total_billed || 0).toLocaleString()}</td>
+      <td>Rs ${Number(supplier.paid || 0).toLocaleString()}</td>
+      <td style="color:var(--accent-rose);font-weight:600;">Rs ${Number(supplier.remaining || 0).toLocaleString()}</td>
+      <td>${Number(supplier.batches_count || 0)}</td>
+      <td><span class="badge ${badgeClass}">● ${escapeBillHtml(status)}</span></td>
       <td>
-        <div style="display: flex; gap: 6px;">
-          <button onclick="showSupplierDetails('${s.supplier_name}')" class="btn btn-action-details"><i class="fa-solid fa-eye"></i> Details</button>
-          <button onclick="openPaySupplierModal('${s.supplier_name}', ${s.remaining})" class="btn btn-action-edit" style="background: #d1fae5; border-color: #6ee7b7; color: #047857;"><i class="fa-solid fa-credit-card"></i> Pay</button>
+        <div style="display:flex;gap:6px;">
+          <button onclick="showSupplierDetails(${Number(supplier.supplier_id)})" class="btn btn-action-details"><i class="fa-solid fa-eye"></i> Details</button>
+          <button onclick="openPaySupplierModal(${Number(supplier.supplier_id)}, ${Number(supplier.remaining || 0)}, ${Number(supplier.total_billed || 0)}, ${Number(supplier.paid || 0)}, ${Number(supplier.batches_count || 0)})" class="btn btn-action-edit" style="background:#d1fae5;border-color:#6ee7b7;color:#047857;"><i class="fa-solid fa-credit-card"></i> Pay</button>
         </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
+      </td>`;
+    tbody.appendChild(row);
   });
 }
 
-function showSupplierDetails(name) {
-  document.getElementById('supplier-bills-main-container').style.display = 'none';
-  document.getElementById('supplier-details-container').style.display = 'block';
-  document.getElementById('supp-det-name').innerText = name;
-  document.getElementById('supp-det-avatar').innerText = name.charAt(0).toUpperCase();
+function renderSupplierBatches(batches) {
+  const tbody = document.getElementById('supp-det-batches-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!batches.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">No batch records.</td></tr>';
+    return;
+  }
+  batches.forEach(batch => {
+    const status = String(batch.status || 'Pending');
+    const badgeClass = status === 'Completed' ? 'badge-success' : status === 'Partial' ? 'badge-warning' : 'badge-danger';
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${escapeBillHtml(batch.batch_name)}</td><td>${escapeBillHtml(batch.date)}</td><td>Rs ${Number(batch.total || 0).toLocaleString()}</td><td>Rs ${Number(batch.paid || 0).toLocaleString()}</td><td>Rs ${Number(batch.remaining || 0).toLocaleString()}</td><td><span class="badge ${badgeClass}">● ${escapeBillHtml(status)}</span></td><td>—</td>`;
+    tbody.appendChild(row);
+  });
+}
+
+function renderSupplierPayments(payments) {
+  const tbody = document.getElementById('supp-det-payments-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!payments.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">No payment records.</td></tr>';
+    return;
+  }
+  payments.forEach((payment, index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${index + 1}</td><td>${escapeBillHtml(payment.date)}</td><td>${escapeBillHtml(payment.batch_name || 'General')}</td><td>Rs ${Number(payment.amount || 0).toLocaleString()}</td><td>${escapeBillHtml(payment.remarks || '-')}</td>`;
+    tbody.appendChild(row);
+  });
+}
+
+async function showSupplierDetails(supplierId) {
+  const main = document.getElementById('supplier-bills-main-container');
+  const details = document.getElementById('supplier-details-container');
+  if (!main || !details) return;
+  main.style.display = 'none';
+  details.style.display = 'block';
+  try {
+    const response = await fetch(`/api/suppliers/details/${Number(supplierId)}/`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    setBillText('supp-det-name', data.supplier_name || 'Supplier');
+    setBillText('supp-det-avatar', String(data.supplier_name || '?').charAt(0).toUpperCase());
+    setBillText('supp-det-batches-cnt', data.total_batches || 0);
+    setBillText('supp-det-billed', `Rs ${Number(data.total_billed || 0).toLocaleString()}`);
+    setBillText('supp-det-paid', `Rs ${Number(data.total_paid || 0).toLocaleString()}`);
+    setBillText('supp-det-outstanding', Number(data.outstanding || 0) > 0 ? `Rs ${Number(data.outstanding).toLocaleString()}` : 'Cleared');
+    setBillText('supp-tab-btn-batches', `Batches (${(data.batches || []).length})`);
+    setBillText('supp-tab-btn-payments', `Payment History (${(data.payments || []).length})`);
+    renderSupplierBatches(data.batches || []);
+    renderSupplierPayments(data.payments || []);
+    switchSupplierDetTab('batches');
+  } catch (error) {
+    console.error(error);
+    setBillText('supp-det-name', 'Unable to load supplier details');
+  }
 }
 
 function hideSupplierDetails() {
@@ -2448,12 +2765,22 @@ function switchSupplierDetTab(tab) {
   document.getElementById('supp-det-tab-payments').style.display = tab === 'payments' ? 'block' : 'none';
 }
 
-function openPaySupplierModal(name, remaining) {
-  document.getElementById('pay-supp-name').innerText = name;
-  document.getElementById('pay-supp-remaining').innerText = `Rs ${remaining.toLocaleString()}`;
-  document.getElementById('pay-supp-amount-input').value = remaining;
+function openPaySupplierModal(supplierId, remaining, totalBilled, paid, batches) {
+  const supplier = allSupplierBillsData.find(item => Number(item.supplier_id) === Number(supplierId));
+  const name = supplier ? supplier.supplier_name : 'Supplier';
+  const supplierIdInput = document.getElementById('pay-supp-id');
+  if (supplierIdInput) supplierIdInput.value = supplierId;
+  setBillText('pay-supp-name', name);
+  setBillText('pay-supp-batches', `${Number(batches || 0)} batch(es)`);
+  setBillText('pay-supp-total', `Rs ${Number(totalBilled || 0).toLocaleString()}`);
+  setBillText('pay-supp-paid', `Rs ${Number(paid || 0).toLocaleString()}`);
+  setBillText('pay-supp-remaining', `Rs ${Number(remaining || 0).toLocaleString()}`);
+  const amountInput = document.getElementById('pay-supp-amount-input');
+  if (amountInput) amountInput.value = Number(remaining || 0);
+  const remarksInput = document.getElementById('pay-supp-remarks-input');
+  if (remarksInput) remarksInput.value = '';
   updatePaySuppRemainingCalc();
-  document.getElementById('modal-pay-supplier').classList.add('active');
+  document.getElementById('modal-pay-supplier')?.classList.add('active');
 }
 
 function closePaySupplierModal() {
@@ -2484,105 +2811,276 @@ function updatePaySuppRemainingCalc() {
   if (calcEl) calcEl.innerText = `After payment: Rs ${diff.toLocaleString()} remaining`;
 }
 
-function submitPaySupplier() {
-  closePaySupplierModal();
-  loadSupplierBills();
+async function submitPaySupplier() {
+  const supplierId = document.getElementById('pay-supp-id')?.value;
+  const amount = Number(document.getElementById('pay-supp-amount-input')?.value || 0);
+  const remarks = document.getElementById('pay-supp-remarks-input')?.value.trim() || 'Payment';
+  if (!supplierId) {
+    alert('Supplier is missing from the payment form.');
+    return;
+  }
+  if (amount <= 0) {
+    alert('Enter a payment amount greater than zero.');
+    return;
+  }
+  try {
+    const response = await fetch('/api/supplier-bills/pay/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ supplier_id: Number(supplierId), amount, remarks })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Could not save payment');
+    closePaySupplierModal();
+    await loadSupplierBills();
+    alert(data.message || 'Payment saved successfully.');
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'Failed to save supplier payment');
+  }
 }
 
 /* =========================================================
    8. CUSTOMER BILLS VIEW (Matching project_IVM.pdf Page 15 & 16)
 ========================================================= */
 let allCustomerBillsData = [];
+let customerBillsFilter = 'all';
+let customerBillsSearch = '';
 
 async function loadCustomerBills() {
   try {
-    const res = await fetch('/api/customer-bills/');
-    const data = await res.json();
-    allCustomerBillsData = data.customers;
-    renderCustomerBillsTable(allCustomerBillsData);
-  } catch (err) {
-    console.error(err);
+    const response = await fetch('/api/customer-bills/');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    allCustomerBillsData = Array.isArray(data.customers) ? data.customers : [];
+    setBillText('cust-tot-count', data.total_customers ?? allCustomerBillsData.length);
+    setBillText('cust-tot-billed', `Rs ${Number(data.total_billed || 0).toLocaleString()}`);
+    setBillText('cust-tot-collected', `Rs ${Number(data.total_collected || 0).toLocaleString()}`);
+    setBillText('cust-tot-outstanding', `Rs ${Number(data.total_outstanding || 0).toLocaleString()}`);
+    applyCustomerBillsFilters();
+  } catch (error) {
+    console.error(error);
+    const tbody = document.getElementById('customer-bills-body');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">Unable to load customer bills.</td></tr>';
   }
+}
+
+function applyCustomerBillsFilters() {
+  const query = customerBillsSearch.trim().toLowerCase();
+  const filtered = allCustomerBillsData.filter(customer => {
+    const status = String(customer.status || '').toLowerCase();
+    const matchesStatus = customerBillsFilter === 'all'
+      || (customerBillsFilter === 'cleared' && status === 'cleared')
+      || (customerBillsFilter === 'outstanding' && status === 'outstanding');
+    const searchable = [customer.customer_name, customer.phone].filter(Boolean).join(' ').toLowerCase();
+    return matchesStatus && (!query || searchable.includes(query));
+  });
+
+  document.querySelectorAll('[data-customer-bill-filter]').forEach(button => {
+    button.classList.toggle('active', button.dataset.customerBillFilter === customerBillsFilter);
+  });
+  renderCustomerBillsTable(filtered);
+}
+
+function filterCustomerBillsTab(filter) {
+  customerBillsFilter = ['all', 'cleared', 'outstanding'].includes(filter) ? filter : 'all';
+  applyCustomerBillsFilters();
+}
+
+function filterCustomerBillsSearch(value) {
+  customerBillsSearch = value;
+  applyCustomerBillsFilters();
 }
 
 function renderCustomerBillsTable(customers) {
   const tbody = document.getElementById('customer-bills-body');
   if (!tbody) return;
   tbody.innerHTML = '';
-  document.getElementById('cust-bills-count-label').innerText = `${customers.length} customers`;
+  setBillText('cust-bills-count-label', `${customers.length} customer${customers.length === 1 ? '' : 's'}`);
 
-  customers.forEach(c => {
-    let badgeClass = 'badge-danger';
-    if (c.status === 'Cleared') badgeClass = 'badge-success';
+  if (customers.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:32px;">No customers match the selected filters.</td></tr>';
+    return;
+  }
 
-    const firstChar = c.customer_name.charAt(0).toUpperCase();
-
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>
-        <div style="display: flex; align-items: center; gap: 8px;">
-          <div style="width: 24px; height: 24px; background: #2563eb; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700;">${firstChar}</div>
-          <span style="font-weight: 700; color: #111827;">${c.customer_name}</span>
-        </div>
-      </td>
-      <td style="font-weight: 600;">Rs ${c.total_billed.toLocaleString()}</td>
-      <td>Rs ${c.collected.toLocaleString()}</td>
-      <td style="color: var(--accent-rose); font-weight: 600;">Rs ${c.outstanding.toLocaleString()}</td>
-      <td>${c.bills_count || 1}</td>
-      <td><span class="badge ${badgeClass}">● ${c.status}</span></td>
-      <td>
-        <div style="display: flex; gap: 6px;">
-          <button onclick="showCustomerDetails('${c.customer_name}')" class="btn btn-action-details"><i class="fa-solid fa-eye"></i> Details</button>
-          <button onclick="openPayCustomerModal('${c.customer_name}')" class="btn btn-action-edit" style="background: #d1fae5; border-color: #6ee7b7; color: #047857;"><i class="fa-solid fa-credit-card"></i> Pay</button>
-        </div>
-      </td>
-    `;
-    tbody.appendChild(tr);
+  customers.forEach(customer => {
+    const status = String(customer.status || 'No Bills');
+    const badgeClass = status === 'Cleared' ? 'badge-success' : status === 'Outstanding' ? 'badge-danger' : 'badge-info';
+    const firstChar = String(customer.customer_name || '?').charAt(0).toUpperCase();
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><div style="display:flex;align-items:center;gap:8px;"><div style="width:24px;height:24px;background:#2563eb;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;">${escapeBillHtml(firstChar)}</div><span style="font-weight:700;color:#111827;">${escapeBillHtml(customer.customer_name)}</span></div></td>
+      <td style="font-weight:600;">Rs ${Number(customer.total_billed || 0).toLocaleString()}</td>
+      <td>Rs ${Number(customer.collected || 0).toLocaleString()}</td>
+      <td style="color:var(--accent-rose);font-weight:600;">Rs ${Number(customer.outstanding || 0).toLocaleString()}</td>
+      <td>${Number(customer.bills_count || 0)}</td>
+      <td><span class="badge ${badgeClass}">● ${escapeBillHtml(status)}</span></td>
+      <td><div style="display:flex;gap:6px;"><button onclick="showCustomerDetails(${Number(customer.customer_id)})" class="btn btn-action-details"><i class="fa-solid fa-eye"></i> Details</button><button onclick="openPayCustomerModal(${Number(customer.customer_id)})" class="btn btn-action-edit" style="background:#d1fae5;border-color:#6ee7b7;color:#047857;"><i class="fa-solid fa-credit-card"></i> Pay</button></div></td>`;
+    tbody.appendChild(row);
   });
 }
 
-function showCustomerDetails(name) {
-  document.getElementById('customer-bills-main-container').style.display = 'none';
-  document.getElementById('customer-details-container').style.display = 'block';
-  document.getElementById('cust-det-name').innerText = name;
-  document.getElementById('cust-det-avatar').innerText = name.charAt(0).toUpperCase();
+function renderCustomerBills(bills) {
+  const tbody = document.getElementById('cust-det-bills-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!bills.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">No bill records.</td></tr>';
+    return;
+  }
+  bills.forEach(bill => {
+    const status = String(bill.status || 'Pending');
+    const badgeClass = status === 'Paid' ? 'badge-success' : status === 'Refunded' ? 'badge-info' : 'badge-warning';
+    const row = document.createElement('tr');
+    row.innerHTML = `<td style="font-weight:600;">${escapeBillHtml(bill.bill_number)}</td><td>${escapeBillHtml(bill.sale_date)}</td><td>Rs ${Number(bill.total_amount || 0).toLocaleString()}</td><td>Rs ${Number(bill.amount_paid || 0).toLocaleString()}</td><td>Rs ${Number(bill.remaining || 0).toLocaleString()}</td><td><span class="badge ${badgeClass}">● ${escapeBillHtml(status)}</span></td><td>—</td>`;
+    tbody.appendChild(row);
+  });
+}
+
+function renderCustomerPayments(payments) {
+  const tbody = document.getElementById('cust-det-payments-tbody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
+  if (!payments.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">No payment records.</td></tr>';
+    return;
+  }
+  payments.forEach((payment, index) => {
+    const row = document.createElement('tr');
+    row.innerHTML = `<td>${index + 1}</td><td>${escapeBillHtml(payment.date)}</td><td>${escapeBillHtml(payment.bill_number || 'General')}</td><td>Rs ${Number(payment.amount || 0).toLocaleString()}</td><td>${escapeBillHtml(payment.remarks || '-')}</td>`;
+    tbody.appendChild(row);
+  });
+}
+
+async function showCustomerDetails(customerId) {
+  const main = document.getElementById('customer-bills-main-container');
+  const details = document.getElementById('customer-details-container');
+  if (!main || !details) return;
+  main.style.display = 'none';
+  details.style.display = 'block';
+  try {
+    const response = await fetch(`/api/customers/details/${Number(customerId)}/`);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    setBillText('cust-det-name', data.customer_name || 'Customer');
+    setBillText('cust-det-avatar', String(data.customer_name || '?').charAt(0).toUpperCase());
+    setBillText('cust-det-bills-cnt', data.total_bills || 0);
+    setBillText('cust-det-billed', `Rs ${Number(data.total_billed || 0).toLocaleString()}`);
+    setBillText('cust-det-collected', `Rs ${Number(data.total_collected || 0).toLocaleString()}`);
+    setBillText('cust-det-outstanding', Number(data.outstanding || 0) > 0 ? `Rs ${Number(data.outstanding).toLocaleString()}` : 'Cleared');
+    setBillText('cust-tab-btn-bills', `Bills (${(data.bills || []).length})`);
+    setBillText('cust-tab-btn-payments', `Payment History (${(data.payments || []).length})`);
+    renderCustomerBills(data.bills || []);
+    renderCustomerPayments(data.payments || []);
+    switchCustomerDetTab('bills');
+  } catch (error) {
+    console.error(error);
+    setBillText('cust-det-name', 'Unable to load customer details');
+  }
 }
 
 function hideCustomerDetails() {
-  document.getElementById('customer-details-container').style.display = 'none';
-  document.getElementById('customer-bills-main-container').style.display = 'block';
+  const details = document.getElementById('customer-details-container');
+  const main = document.getElementById('customer-bills-main-container');
+  if (details) details.style.display = 'none';
+  if (main) main.style.display = 'block';
 }
 
 function switchCustomerDetTab(tab) {
-  document.getElementById('cust-tab-btn-bills').className = tab === 'bills' ? 'btn btn-primary' : 'btn btn-secondary';
-  document.getElementById('cust-tab-btn-payments').className = tab === 'payments' ? 'btn btn-primary' : 'btn btn-secondary';
-  document.getElementById('cust-det-tab-bills').style.display = tab === 'bills' ? 'block' : 'none';
-  document.getElementById('cust-det-tab-payments').style.display = tab === 'payments' ? 'block' : 'none';
+  const billsButton = document.getElementById('cust-tab-btn-bills');
+  const paymentsButton = document.getElementById('cust-tab-btn-payments');
+  if (billsButton) billsButton.className = tab === 'bills' ? 'btn btn-primary' : 'btn btn-secondary';
+  if (paymentsButton) paymentsButton.className = tab === 'payments' ? 'btn btn-primary' : 'btn btn-secondary';
+  const billsTab = document.getElementById('cust-det-tab-bills');
+  const paymentsTab = document.getElementById('cust-det-tab-payments');
+  if (billsTab) billsTab.style.display = tab === 'bills' ? 'block' : 'none';
+  if (paymentsTab) paymentsTab.style.display = tab === 'payments' ? 'block' : 'none';
+}
+
+function openPayCustomerModal(customerId) {
+  const customer = allCustomerBillsData.find(item => Number(item.customer_id) === Number(customerId));
+  const idInput = document.getElementById('pay-customer-id');
+  const amountInput = document.getElementById('pay-customer-amount');
+  const remarksInput = document.getElementById('pay-customer-remarks');
+  const title = document.getElementById('pay-customer-title');
+  if (idInput) idInput.value = customerId;
+  if (amountInput) amountInput.value = Number(customer?.outstanding || 0);
+  if (remarksInput) remarksInput.value = '';
+  if (title) title.textContent = customer ? `Receive Payment from ${customer.customer_name}` : 'Receive Payment from Customer';
+  document.getElementById('modal-pay-customer')?.classList.add('active');
+}
+
+function closeCustomerPayModal() {
+  document.getElementById('modal-pay-customer')?.classList.remove('active');
+}
+
+async function submitCustomerPayment() {
+  const customerId = document.getElementById('pay-customer-id')?.value;
+  const amount = Number(document.getElementById('pay-customer-amount')?.value || 0);
+  const remarks = document.getElementById('pay-customer-remarks')?.value.trim() || 'Payment received';
+  if (!customerId) {
+    alert('Customer is missing from the payment form.');
+    return;
+  }
+  if (amount <= 0) {
+    alert('Enter a payment amount greater than zero.');
+    return;
+  }
+  try {
+    const response = await fetch('/api/customer-bills/pay/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ customer_id: Number(customerId), amount, remarks })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Could not save payment');
+    closeCustomerPayModal();
+    await loadCustomerBills();
+    alert(data.message || 'Payment saved successfully.');
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'Failed to save customer payment');
+  }
 }
 
 /* =========================================================
    9. SUPPLIERS & CUSTOMERS DIRECTORIES
 ========================================================= */
 let suppliersData = [];
+let suppliersDirectorySearch = '';
+
 async function loadSuppliers() {
   try {
-    const res = await fetch('/api/suppliers/');
-    const data = await res.json();
-    suppliersData = data.suppliers;
-    renderSuppliersDirectoryTable(suppliersData);
-  } catch (err) {
-    console.error(err);
+    const response = await fetch('/api/suppliers/');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    suppliersData = Array.isArray(data.suppliers) ? data.suppliers : [];
+    applySuppliersDirectoryFilters();
+  } catch (error) {
+    console.error(error);
   }
 }
 
-function filterSuppliersDirectorySearch(q) {
-  const query = q.toLowerCase();
-  const showInactive = document.getElementById('supp-dir-toggle-inactive') ? document.getElementById('supp-dir-toggle-inactive').checked : true;
-  const filtered = suppliersData.filter(s => 
-    (s.is_active || showInactive) &&
-    (s.name.toLowerCase().includes(query) || (s.contact && s.contact.toLowerCase().includes(query)) || (s.address && s.address.toLowerCase().includes(query)))
-  );
+function applySuppliersDirectoryFilters() {
+  const query = suppliersDirectorySearch.trim().toLowerCase();
+  const showInactive = document.getElementById('supp-dir-toggle-inactive')?.checked ?? true;
+  const filtered = suppliersData.filter(supplier => {
+    const matchesActive = supplier.is_active || showInactive;
+    const searchable = [supplier.name, supplier.contact, supplier.address].filter(Boolean).join(' ').toLowerCase();
+    return matchesActive && (!query || searchable.includes(query));
+  });
   renderSuppliersDirectoryTable(filtered);
+  const total = suppliersData.length;
+  const active = suppliersData.filter(supplier => supplier.is_active).length;
+  setBillText('supp-dir-total', total);
+  setBillText('supp-dir-active', active);
+  setBillText('supp-dir-inactive', total - active);
+  setBillText('supp-dir-showing', filtered.length);
+}
+
+function filterSuppliersDirectorySearch(value) {
+  suppliersDirectorySearch = value;
+  applySuppliersDirectoryFilters();
 }
 
 function renderSuppliersDirectoryTable(suppliers) {
@@ -2676,20 +3174,20 @@ async function submitSaveSupplier() {
 }
 
 async function deleteSupplier(sId) {
-  if (!confirm('Are you sure you want to delete this supplier?')) return;
+  if (!confirm('Permanently delete this supplier? Suppliers with batch or payment history cannot be deleted.')) return;
   try {
-    const res = await fetch('/api/suppliers/delete/', {
+    const response = await fetch('/api/suppliers/delete/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ supplier_id: sId })
     });
-    const data = await res.json();
-    if (data.status === 'success') {
-      loadSuppliers();
-      alert('Supplier deleted successfully!');
-    }
-  } catch (err) {
-    console.error(err);
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || 'Could not delete supplier');
+    await loadSuppliers();
+    alert(data.message || 'Supplier deleted permanently.');
+  } catch (error) {
+    console.error(error);
+    alert(error.message || 'Failed to delete supplier');
   }
 }
 
@@ -2831,58 +3329,118 @@ async function deleteCustomer(cId) {
    10. SETTINGS SUB-VIEWS (Staff, Lookup, Reorder)
 ========================================================= */
 let staffData = [];
+
+function escapeSettingsHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#039;'
+  }[character]));
+}
+
+function setSettingsText(id, value) {
+  const element = document.getElementById(id);
+  if (element) element.textContent = value;
+}
+
+function updateStaffStats(staff) {
+  const active = staff.filter(member => member.is_active).length;
+  const inactive = staff.length - active;
+  const admins = staff.filter(member => member.role === 'Admin').length;
+  setSettingsText('staff-stat-total', staff.length);
+  setSettingsText('staff-stat-active', active);
+  setSettingsText('staff-stat-inactive', inactive);
+  setSettingsText('staff-stat-admins', admins);
+}
+
 async function loadStaff() {
   try {
-    const res = await fetch('/api/staff/');
-    const data = await res.json();
-    staffData = data.staff;
-    renderStaffTable(staffData);
-  } catch (err) {
-    console.error(err);
+    const response = await fetch('/api/staff/');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    staffData = Array.isArray(data.staff) ? data.staff : [];
+    updateStaffStats(staffData);
+    applyStaffFilters();
+  } catch (error) {
+    console.error(error);
+    const tbody = document.getElementById('staff-table-body');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:#ef4444;padding:24px;">Unable to load staff records.</td></tr>';
   }
 }
 
-function filterStaffSearch(query) {
-  const q = query.toLowerCase();
-  const showInactive = document.getElementById('staff-toggle-inactive') ? document.getElementById('staff-toggle-inactive').checked : true;
-  const filtered = staffData.filter(s => 
-    (s.is_active || showInactive) &&
-    (s.name.toLowerCase().includes(q) || s.username.toLowerCase().includes(q) || (s.email && s.email.toLowerCase().includes(q)) || s.role.toLowerCase().includes(q))
-  );
+function applyStaffFilters() {
+  const input = document.getElementById('staff-search-input');
+  const toggle = document.getElementById('staff-toggle-inactive');
+  const query = (input ? input.value : '').trim().toLowerCase();
+  const showInactive = toggle ? toggle.checked : false;
+  const filtered = staffData.filter(member => {
+    const matchesStatus = member.is_active || showInactive;
+    const searchable = [member.name, member.username, member.email, member.contact, member.role]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return matchesStatus && (!query || searchable.includes(query));
+  });
   renderStaffTable(filtered);
+}
+
+function filterStaffSearch(query) {
+  const input = document.getElementById('staff-search-input');
+  if (input) input.value = query;
+  applyStaffFilters();
 }
 
 function renderStaffTable(staff) {
   const tbody = document.getElementById('staff-table-body');
   if (!tbody) return;
-  tbody.innerHTML = '';
-  document.getElementById('staff-count-label').innerText = `${staff.length} records`;
 
-  staff.forEach((s, idx) => {
-    const initials = s.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${idx + 1}</td>
+  tbody.innerHTML = '';
+  const countLabel = document.getElementById('staff-count-label');
+  if (countLabel) {
+    countLabel.textContent = staffData.length === staff.length
+      ? `${staff.length} record${staff.length === 1 ? '' : 's'}`
+      : `${staff.length} of ${staffData.length} records`;
+  }
+
+  if (staff.length === 0) {
+    const message = staffData.length === 0 ? 'No staff records stored.' : 'No staff records match the current filters.';
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:#94a3b8;padding:24px;">${message}</td></tr>`;
+    return;
+  }
+
+  staff.forEach((member, index) => {
+    const initials = String(member.name || '?')
+      .split(' ')
+      .filter(Boolean)
+      .map(part => part[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${index + 1}</td>
       <td>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <div style="width:28px; height:28px; background:#2563eb; color:#fff; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;">${initials}</div>
-          <div><strong style="color: #0f172a;">${s.name}</strong><br><span style="font-size:11px; color:#6b7280;">${s.email || '-'}</span></div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div style="width:28px;height:28px;background:#2563eb;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;">${escapeSettingsHtml(initials)}</div>
+          <div><strong style="color:#0f172a;">${escapeSettingsHtml(member.name)}</strong><br><span style="font-size:11px;color:#6b7280;">${escapeSettingsHtml(member.email || '-')}</span></div>
         </div>
       </td>
-      <td><span class="badge ${s.role === 'Admin' ? 'badge-purple' : 'badge-info'}" style="${s.role === 'Admin' ? 'background:#f3e8ff; color:#7c3aed;' : ''}">${s.role}</span></td>
-      <td>${s.contact || '-'}</td>
-      <td>${s.username}</td>
-      <td>${s.hire_date || '-'}</td>
-      <td>${s.last_login || 'Never'}</td>
-      <td><span class="badge ${s.is_active ? 'badge-success' : 'badge-danger'}">● ${s.status}</span></td>
+      <td><span class="badge ${member.role === 'Admin' ? 'badge-purple' : 'badge-info'}" style="${member.role === 'Admin' ? 'background:#f3e8ff;color:#7c3aed;' : ''}">${escapeSettingsHtml(member.role)}</span></td>
+      <td>${escapeSettingsHtml(member.contact || '-')}</td>
+      <td>${escapeSettingsHtml(member.username)}</td>
+      <td>${escapeSettingsHtml(member.hire_date || '-')}</td>
+      <td>${escapeSettingsHtml(member.last_login || 'Never')}</td>
+      <td><span class="badge ${member.is_active ? 'badge-success' : 'badge-danger'}">● ${escapeSettingsHtml(member.status)}</span></td>
       <td>
-        <div style="display:flex; gap:4px;">
-          <button onclick="openEditStaffModal(${s.id})" class="btn btn-action-edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-          <button onclick="deleteStaff(${s.id})" class="btn btn-action-edit" style="background:#fee2e2; color:#b91c1c;"><i class="fa-solid fa-trash"></i> Del</button>
+        <div style="display:flex;gap:4px;">
+          <button onclick="openEditStaffModal(${Number(member.id)})" class="btn btn-action-edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+          <button onclick="deleteStaff(${Number(member.id)})" class="btn btn-action-edit" style="background:#fee2e2;color:#b91c1c;"><i class="fa-solid fa-trash"></i> Delete</button>
         </div>
       </td>
     `;
-    tbody.appendChild(tr);
+    tbody.appendChild(row);
   });
 }
 
@@ -2891,6 +3449,8 @@ function openAddStaffModal() {
   document.getElementById('modal-staff-title').innerText = 'Add Staff Member';
   document.getElementById('staff-name-input').value = '';
   document.getElementById('staff-username-input').value = '';
+  document.getElementById('staff-email-input').value = '';
+  document.getElementById('staff-contact-input').value = '';
   document.getElementById('staff-password-input').value = '';
   document.getElementById('staff-role-select').value = 'Cashier';
   document.getElementById('modal-add-staff').classList.add('active');
@@ -2903,6 +3463,8 @@ function openEditStaffModal(sId) {
   document.getElementById('modal-staff-title').innerText = `Edit Staff Member (#${s.id})`;
   document.getElementById('staff-name-input').value = s.name;
   document.getElementById('staff-username-input').value = s.username;
+  document.getElementById('staff-email-input').value = s.email || '';
+  document.getElementById('staff-contact-input').value = s.contact || '';
   document.getElementById('staff-password-input').value = '';
   document.getElementById('staff-role-select').value = s.role;
   document.getElementById('modal-add-staff').classList.add('active');
@@ -2917,6 +3479,8 @@ async function submitSaveStaff() {
   const name = document.getElementById('staff-name-input').value.trim();
   const username = document.getElementById('staff-username-input').value.trim();
   const password = document.getElementById('staff-password-input').value;
+  const email = document.getElementById('staff-email-input').value.trim();
+  const contact = document.getElementById('staff-contact-input').value.trim();
   const role = document.getElementById('staff-role-select').value;
 
   if (!name || !username) {
@@ -2925,7 +3489,7 @@ async function submitSaveStaff() {
   }
 
   const endpoint = sId ? '/api/staff/update/' : '/api/staff/add/';
-  const payload = { staff_id: sId, name, username, password, role };
+  const payload = { staff_id: sId, name, username, email, contact, password, role };
 
   try {
     const res = await fetch(endpoint, {
@@ -2936,7 +3500,7 @@ async function submitSaveStaff() {
     const data = await res.json();
     if (data.status === 'success') {
       closeAddStaffModal();
-      loadStaff();
+      await loadStaff();
       alert(`Staff member "${name}" ${sId ? 'updated' : 'added'} successfully!`);
     } else {
       alert('Error: ' + (data.message || 'Could not save staff member'));
@@ -2957,8 +3521,10 @@ async function deleteStaff(sId) {
     });
     const data = await res.json();
     if (data.status === 'success') {
-      loadStaff();
-      alert('Staff member deleted successfully!');
+      await loadStaff();
+      alert(data.message || 'Staff member deleted successfully!');
+    } else {
+      alert('Error: ' + (data.message || 'Could not delete staff member'));
     }
   } catch (err) {
     console.error(err);
@@ -2966,50 +3532,88 @@ async function deleteStaff(sId) {
 }
 
 let categoriesData = [];
+
+function updateCategoryStats(categories) {
+  const active = categories.filter(category => category.is_active).length;
+  setSettingsText('cat-stat-total', categories.length);
+  setSettingsText('cat-stat-active', active);
+  setSettingsText('cat-stat-inactive', categories.length - active);
+}
+
 async function loadCategories() {
   try {
-    const res = await fetch('/api/categories/');
-    const data = await res.json();
-    categoriesData = data.categories;
-    renderCategoriesTable(categoriesData);
-  } catch (err) {
-    console.error(err);
+    const response = await fetch('/api/categories/');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    categoriesData = Array.isArray(data.categories) ? data.categories : [];
+    updateCategoryStats(categoriesData);
+    applyCategoryFilters();
+  } catch (error) {
+    console.error(error);
+    const tbody = document.getElementById('categories-table-body');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">Unable to load categories.</td></tr>';
   }
 }
 
-function filterCategoriesSearch(query) {
-  const q = query.toLowerCase();
-  const showInactive = document.getElementById('cat-toggle-inactive') ? document.getElementById('cat-toggle-inactive').checked : true;
-  const filtered = categoriesData.filter(c => 
-    (c.is_active || showInactive) &&
-    (c.name.toLowerCase().includes(q) || (c.description && c.description.toLowerCase().includes(q)))
-  );
+function applyCategoryFilters() {
+  const input = document.getElementById('cat-search-input');
+  const toggle = document.getElementById('cat-toggle-inactive');
+  const query = (input ? input.value : '').trim().toLowerCase();
+  const showInactive = toggle ? toggle.checked : false;
+  const filtered = categoriesData.filter(category => {
+    const matchesStatus = category.is_active || showInactive;
+    const searchable = [category.name, category.description]
+      .filter(Boolean)
+      .join(' ')
+      .toLowerCase();
+    return matchesStatus && (!query || searchable.includes(query));
+  });
   renderCategoriesTable(filtered);
+  setSettingsText('cat-stat-showing', filtered.length);
+}
+
+function filterCategoriesSearch(query) {
+  const input = document.getElementById('cat-search-input');
+  if (input) input.value = query;
+  applyCategoryFilters();
 }
 
 function renderCategoriesTable(categories) {
   const tbody = document.getElementById('categories-table-body');
   if (!tbody) return;
   tbody.innerHTML = '';
-  document.getElementById('cat-count-label').innerText = `${categories.length} entries`;
 
-  categories.forEach((c, idx) => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${idx + 1}</td>
-      <td><span class="badge badge-info" style="font-weight: 700;">${c.name}</span></td>
-      <td style="color: #64748b;">${c.description || '-'}</td>
-      <td>#${c.order_num}</td>
-      <td><span class="badge ${c.is_active ? 'badge-success' : 'badge-danger'}">● ${c.status}</span></td>
-      <td>${c.created_at || '-'}</td>
+  const countLabel = document.getElementById('cat-count-label');
+  if (countLabel) {
+    countLabel.textContent = categoriesData.length === categories.length
+      ? `${categories.length} ${categories.length === 1 ? 'entry' : 'entries'}`
+      : `${categories.length} of ${categoriesData.length} entries`;
+  }
+
+  if (categories.length === 0) {
+    const message = categoriesData.length === 0 ? 'No category records stored.' : 'No categories match the current filters.';
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">${message}</td></tr>`;
+    return;
+  }
+
+  categories.forEach((category, index) => {
+    const productCount = Number(category.product_count || 0);
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${index + 1}</td>
+      <td><span class="badge badge-info" style="font-weight:700;">${escapeSettingsHtml(category.name)}</span><br><small style="color:#94a3b8;">${productCount} product${productCount === 1 ? '' : 's'}</small></td>
+      <td style="color:#64748b;">${escapeSettingsHtml(category.description || '-')}</td>
+      <td>#${escapeSettingsHtml(category.order_num)}</td>
+      <td><span class="badge ${category.is_active ? 'badge-success' : 'badge-danger'}">● ${escapeSettingsHtml(category.status)}</span></td>
+      <td>${escapeSettingsHtml(category.created_at || '-')}</td>
       <td>
-        <div style="display:flex; gap:4px;">
-          <button onclick="openEditCategoryModal(${c.id})" class="btn btn-action-edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
-          <button onclick="deleteCategory(${c.id})" class="btn btn-action-edit" style="background:#fee2e2; color:#b91c1c;"><i class="fa-solid fa-trash"></i> Del</button>
+        <div style="display:flex;gap:4px;">
+          <button onclick="openEditCategoryModal(${Number(category.id)})" class="btn btn-action-edit"><i class="fa-solid fa-pen-to-square"></i> Edit</button>
+          <button onclick="deleteCategory(${Number(category.id)})" class="btn btn-action-edit" style="background:#fee2e2;color:#b91c1c;"><i class="fa-solid fa-trash"></i> Delete</button>
         </div>
       </td>
     `;
-    tbody.appendChild(tr);
+    tbody.appendChild(row);
   });
 }
 
@@ -3022,14 +3626,14 @@ function openAddCategoryModal() {
   document.getElementById('modal-add-category').classList.add('active');
 }
 
-function openEditCategoryModal(cId) {
-  const c = categoriesData.find(item => item.id == cId);
-  if (!c) return;
-  document.getElementById('category-id-hidden').value = c.id;
-  document.getElementById('modal-category-title').innerText = `Edit Category (#${c.id})`;
-  document.getElementById('cat-name-input').value = c.name;
-  document.getElementById('cat-order-input').value = c.order_num;
-  document.getElementById('cat-desc-input').value = c.description || '';
+function openEditCategoryModal(categoryId) {
+  const category = categoriesData.find(item => item.id == categoryId);
+  if (!category) return;
+  document.getElementById('category-id-hidden').value = category.id;
+  document.getElementById('modal-category-title').innerText = `Edit Category (#${category.id})`;
+  document.getElementById('cat-name-input').value = category.name;
+  document.getElementById('cat-order-input').value = category.order_num;
+  document.getElementById('cat-desc-input').value = category.description || '';
   document.getElementById('modal-add-category').classList.add('active');
 }
 
@@ -3038,67 +3642,146 @@ function closeAddCategoryModal() {
 }
 
 async function submitSaveCategory() {
-  const cId = document.getElementById('category-id-hidden').value;
+  const categoryId = document.getElementById('category-id-hidden').value;
   const name = document.getElementById('cat-name-input').value.trim();
-  const orderNum = document.getElementById('cat-order-input').value;
-  const desc = document.getElementById('cat-desc-input').value.trim();
+  const orderNumber = document.getElementById('cat-order-input').value;
+  const description = document.getElementById('cat-desc-input').value.trim();
 
   if (!name) {
     alert('Category name is required');
     return;
   }
 
-  const endpoint = cId ? '/api/categories/update/' : '/api/categories/add/';
-  const payload = { category_id: cId, name, order_num: orderNum, description: desc };
+  const endpoint = categoryId ? '/api/categories/update/' : '/api/categories/add/';
+  const payload = { category_id: categoryId, name, order_num: orderNumber, description };
 
   try {
-    const res = await fetch(endpoint, {
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const data = await res.json();
+    const data = await response.json();
     if (data.status === 'success') {
       closeAddCategoryModal();
-      loadCategories();
-      alert(`Category "${name}" ${cId ? 'updated' : 'added'} successfully!`);
+      await loadCategories();
+      alert(`Category "${name}" ${categoryId ? 'updated' : 'added'} successfully!`);
     } else {
       alert('Error: ' + (data.message || 'Could not save category'));
     }
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
     alert('Failed to connect to server');
   }
 }
 
-async function deleteCategory(cId) {
-  if (!confirm('Are you sure you want to delete this category?')) return;
+async function deleteCategory(categoryId) {
+  if (!confirm('Permanently delete this category? Categories used by products cannot be deleted.')) return;
   try {
-    const res = await fetch('/api/categories/delete/', {
+    const response = await fetch('/api/categories/delete/', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ category_id: cId })
+      body: JSON.stringify({ category_id: categoryId })
     });
-    const data = await res.json();
+    const data = await response.json();
     if (data.status === 'success') {
-      loadCategories();
-      alert('Category deleted successfully!');
+      await loadCategories();
+      alert(data.message || 'Category deleted successfully!');
+    } else {
+      alert('Error: ' + (data.message || 'Could not delete category'));
     }
-  } catch (err) {
-    console.error(err);
+  } catch (error) {
+    console.error(error);
+    alert('Failed to connect to server');
   }
 }
 
 let reorderData = [];
+let reorderFilter = 'all';
+let reorderSearch = '';
+const selectedReorderIds = new Set();
+
+function updateReorderStats() {
+  const lowStock = reorderData.filter(item => item.status === 'Low Stock').length;
+  const outOfStock = reorderData.filter(item => item.status === 'Out of Stock').length;
+  setSettingsText('reorder-stat-issues', reorderData.length);
+  setSettingsText('reorder-stat-low', lowStock);
+  setSettingsText('reorder-stat-out', outOfStock);
+  setSettingsText('reorder-stat-selected', selectedReorderIds.size);
+
+  const allButton = document.getElementById('reorder-filter-all');
+  const lowButton = document.getElementById('reorder-filter-low');
+  const outButton = document.getElementById('reorder-filter-out');
+  if (allButton) allButton.textContent = `All Issues (${reorderData.length})`;
+  if (lowButton) lowButton.textContent = `Low Stock (${lowStock})`;
+  if (outButton) outButton.textContent = `Out of Stock (${outOfStock})`;
+
+  const selectAll = document.getElementById('reorder-select-all');
+  if (selectAll) {
+    const visible = [...document.querySelectorAll('.reorder-item-chk')];
+    const selectedVisible = visible.filter(checkbox => checkbox.checked).length;
+    selectAll.checked = visible.length > 0 && selectedVisible === visible.length;
+    selectAll.indeterminate = selectedVisible > 0 && selectedVisible < visible.length;
+  }
+}
+
 async function loadReorderItems() {
   try {
-    const res = await fetch('/api/reorder/');
-    const data = await res.json();
-    reorderData = data.items;
-    renderReorderTable(reorderData);
-  } catch (err) {
-    console.error(err);
+    const response = await fetch('/api/reorder/');
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+    reorderData = Array.isArray(data.items) ? data.items : [];
+    selectedReorderIds.clear();
+    reorderData.forEach(item => selectedReorderIds.add(String(item.id)));
+    reorderFilter = 'all';
+    reorderSearch = '';
+    const search = document.getElementById('reorder-search-input');
+    if (search) search.value = '';
+    applyReorderFilters();
+  } catch (error) {
+    console.error(error);
+    const tbody = document.getElementById('reorder-table-body');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:24px;">Unable to load reorder items.</td></tr>';
   }
+}
+
+function setReorderFilter(filter) {
+  reorderFilter = ['all', 'low', 'out'].includes(filter) ? filter : 'all';
+  document.querySelectorAll('[data-reorder-filter]').forEach(button => {
+    button.classList.toggle('active', button.dataset.reorderFilter === reorderFilter);
+  });
+  applyReorderFilters();
+}
+
+function applyReorderFilters() {
+  const query = reorderSearch.trim().toLowerCase();
+  const filtered = reorderData.filter(item => {
+    const matchesStatus = reorderFilter === 'all'
+      || (reorderFilter === 'low' && item.status === 'Low Stock')
+      || (reorderFilter === 'out' && item.status === 'Out of Stock');
+    const searchable = [item.product_name, item.size, item.unit].filter(Boolean).join(' ').toLowerCase();
+    return matchesStatus && (!query || searchable.includes(query));
+  });
+
+  renderReorderTable(filtered);
+  setSettingsText('reorder-count-label', `${filtered.length} item${filtered.length === 1 ? '' : 's'}`);
+  updateReorderStats();
+}
+
+function toggleReorderItem(itemId, checked) {
+  const id = String(itemId);
+  if (checked) selectedReorderIds.add(id);
+  else selectedReorderIds.delete(id);
+  updateReorderStats();
+}
+
+function toggleAllReorder(checked) {
+  document.querySelectorAll('.reorder-item-chk').forEach(checkbox => {
+    checkbox.checked = checked;
+    if (checked) selectedReorderIds.add(checkbox.dataset.id);
+    else selectedReorderIds.delete(checkbox.dataset.id);
+  });
+  updateReorderStats();
 }
 
 function renderReorderTable(items) {
@@ -3107,85 +3790,100 @@ function renderReorderTable(items) {
   tbody.innerHTML = '';
 
   if (items.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: #94a3b8; padding: 24px;">No low stock reorder items found</td></tr>';
+    const message = reorderData.length === 0 ? 'No low stock or out-of-stock items found.' : 'No reorder items match the current filters.';
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:24px;">${message}</td></tr>`;
     return;
   }
 
-  items.forEach(it => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td><input type="checkbox" checked class="reorder-item-chk" data-id="${it.id}" style="accent-color:#2563eb;"></td>
-      <td><strong style="color: #0f172a;">${it.product_name}</strong><br><span style="font-size:11px; color:#6b7280;">${it.size} • ${it.unit}</span></td>
-      <td style="font-weight: 700; color: ${it.current_stock <= 0 ? '#ef4444' : '#d97706'};">${it.current_stock}</td>
-      <td>${it.reorder_level}</td>
-      <td><span class="badge ${it.current_stock <= 0 ? 'badge-out-stock' : 'badge-low-stock'}">● ${it.status}</span></td>
-      <td><input type="number" id="reorder-qty-${it.id}" class="form-control" value="${it.qty_to_order}" style="width:80px;"></td>
-      <td><input type="text" id="reorder-notes-${it.id}" class="form-control" placeholder="e.g. urgent, specific brand"></td>
+  items.forEach(item => {
+    const id = String(item.id);
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td><input type="checkbox" class="reorder-item-chk" data-id="${escapeSettingsHtml(id)}" ${selectedReorderIds.has(id) ? 'checked' : ''} onchange="toggleReorderItem('${escapeSettingsHtml(id)}', this.checked)" style="accent-color:#2563eb;"></td>
+      <td><strong style="color:#0f172a;">${escapeSettingsHtml(item.product_name)}</strong><br><span style="font-size:11px;color:#6b7280;">${escapeSettingsHtml(item.size)} • ${escapeSettingsHtml(item.unit)}</span></td>
+      <td style="font-weight:700;color:${item.current_stock <= 0 ? '#ef4444' : '#d97706'};">${escapeSettingsHtml(item.current_stock)}</td>
+      <td>${escapeSettingsHtml(item.reorder_level)}</td>
+      <td><span class="badge ${item.status === 'Out of Stock' ? 'badge-out-stock' : 'badge-low-stock'}">● ${escapeSettingsHtml(item.status)}</span></td>
+      <td><input type="number" min="0.01" step="0.01" id="reorder-qty-${escapeSettingsHtml(id)}" class="form-control" value="${escapeSettingsHtml(item.qty_to_order)}" style="width:80px;"></td>
+      <td><input type="text" id="reorder-notes-${escapeSettingsHtml(id)}" class="form-control" placeholder="e.g. urgent, specific brand"></td>
     `;
-    tbody.appendChild(tr);
+    tbody.appendChild(row);
   });
 }
 
 function generateReorderPDF() {
-  const selectedRows = document.querySelectorAll('.reorder-item-chk:checked');
-  if (selectedRows.length === 0) {
+  if (selectedReorderIds.size === 0) {
     alert('Please select at least one item to generate reorder slip');
     return;
   }
 
   const items = [];
-  selectedRows.forEach(chk => {
-    const id = chk.getAttribute('data-id');
-    const item = reorderData.find(i => i.id == id);
-    if (item) {
-      const qtyIn = document.getElementById(`reorder-qty-${id}`);
-      const notesIn = document.getElementById(`reorder-notes-${id}`);
-      items.push({
-        name: item.product_name,
-        size: item.size,
-        unit: item.unit,
-        current: item.current_stock,
-        reorderLvl: item.reorder_level,
-        orderQty: qtyIn ? qtyIn.value : item.qty_to_order,
-        notes: notesIn ? notesIn.value : ''
-      });
+  let invalidQuantity = false;
+  reorderData.forEach(item => {
+    const id = String(item.id);
+    if (!selectedReorderIds.has(id)) return;
+
+    const quantityInput = document.getElementById(`reorder-qty-${id}`);
+    const notesInput = document.getElementById(`reorder-notes-${id}`);
+    const quantity = Number(quantityInput ? quantityInput.value : item.qty_to_order);
+    if (!Number.isFinite(quantity) || quantity <= 0) {
+      invalidQuantity = true;
+      return;
     }
+
+    items.push({
+      name: item.product_name,
+      size: item.size,
+      unit: item.unit,
+      current: item.current_stock,
+      reorderLvl: item.reorder_level,
+      orderQty: quantity,
+      notes: notesInput ? notesInput.value : ''
+    });
   });
 
+  if (invalidQuantity) {
+    alert('Enter a quantity greater than zero for every selected reorder item.');
+    return;
+  }
+
+  const rows = items.map(item => `
+    <tr>
+      <td style="padding:8px;border:1px solid #ddd;"><strong>${escapeSettingsHtml(item.name)}</strong> (${escapeSettingsHtml(item.size)} - ${escapeSettingsHtml(item.unit)})</td>
+      <td style="padding:8px;border:1px solid #ddd;text-align:center;">${escapeSettingsHtml(item.current)}</td>
+      <td style="padding:8px;border:1px solid #ddd;text-align:center;">${escapeSettingsHtml(item.reorderLvl)}</td>
+      <td style="padding:8px;border:1px solid #ddd;text-align:center;font-weight:700;">${escapeSettingsHtml(item.orderQty)}</td>
+      <td style="padding:8px;border:1px solid #ddd;">${escapeSettingsHtml(item.notes || '-')}</td>
+    </tr>
+  `).join('');
+
   const content = `
-    <div style="font-family: Arial, sans-serif; padding: 24px; max-width: 800px; margin: auto;">
-      <h2 style="text-align: center; margin-bottom: 2px;">Hardware Store</h2>
-      <p style="text-align: center; color: #666; margin: 0 0 16px 0;">SUPPLIER REORDER DEMAND SLIP</p>
-      <p style="text-align: right; font-size: 12px; color: #666;">Date: ${new Date().toLocaleDateString()}</p>
-      
-      <table style="width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px;">
+    <div style="font-family:Arial,sans-serif;padding:24px;max-width:800px;margin:auto;">
+      <h2 style="text-align:center;margin-bottom:2px;">Hardware Store</h2>
+      <p style="text-align:center;color:#666;margin:0 0 16px 0;">SUPPLIER REORDER DEMAND SLIP</p>
+      <p style="text-align:right;font-size:12px;color:#666;">Date: ${new Date().toLocaleDateString()}</p>
+      <table style="width:100%;border-collapse:collapse;margin-top:16px;font-size:13px;">
         <thead>
-          <tr style="background: #1e3a8a; color: #fff;">
-            <th style="padding: 8px; border: 1px solid #1e3a8a;">Product / Variant</th>
-            <th style="padding: 8px; border: 1px solid #1e3a8a; text-align: center;">Current Stock</th>
-            <th style="padding: 8px; border: 1px solid #1e3a8a; text-align: center;">Reorder Level</th>
-            <th style="padding: 8px; border: 1px solid #1e3a8a; text-align: center;">Qty To Order</th>
-            <th style="padding: 8px; border: 1px solid #1e3a8a;">Notes</th>
+          <tr style="background:#1e3a8a;color:#fff;">
+            <th style="padding:8px;border:1px solid #1e3a8a;">Product / Variant</th>
+            <th style="padding:8px;border:1px solid #1e3a8a;text-align:center;">Current Stock</th>
+            <th style="padding:8px;border:1px solid #1e3a8a;text-align:center;">Reorder Level</th>
+            <th style="padding:8px;border:1px solid #1e3a8a;text-align:center;">Qty To Order</th>
+            <th style="padding:8px;border:1px solid #1e3a8a;">Notes</th>
           </tr>
         </thead>
-        <tbody>
-          ${items.map(it => `
-            <tr>
-              <td style="padding: 8px; border: 1px solid #ddd;"><strong>${it.name}</strong> (${it.size} - ${it.unit})</td>
-              <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${it.current}</td>
-              <td style="padding: 8px; border: 1px solid #ddd; text-align: center;">${it.reorderLvl}</td>
-              <td style="padding: 8px; border: 1px solid #ddd; text-align: center; font-weight: 700;">${it.orderQty}</td>
-              <td style="padding: 8px; border: 1px solid #ddd;">${it.notes || '-'}</td>
-            </tr>
-          `).join('')}
-        </tbody>
+        <tbody>${rows}</tbody>
       </table>
     </div>
   `;
 
-  const win = window.open('', '_blank');
-  win.document.write(`<html><head><title>Reorder Demand Slip</title></head><body>${content}</body></html>`);
-  win.document.close();
-  win.focus();
-  setTimeout(() => { win.print(); }, 300);
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Allow pop-ups for this site to generate the reorder slip.');
+    return;
+  }
+  printWindow.document.write(`<html><head><title>Reorder Demand Slip</title></head><body>${content}</body></html>`);
+  printWindow.document.close();
+  printWindow.focus();
+  setTimeout(() => printWindow.print(), 300);
 }

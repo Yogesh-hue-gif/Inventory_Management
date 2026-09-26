@@ -6,6 +6,11 @@ __pycache__/
 db.sqlite3
 db.sqlite3-journal
 
+# Django build artefacts
+staticfiles/
+seed_data.json
+*.log
+
 # Environments
 .env
 .venv
@@ -20,4 +25,13 @@ ENV/
 Thumbs.db
 project-IMS SS file(DPRAMP).docx
 extracted_doc_images/
+project_IVM.pdf
+
+# Document/OCR scratch output (local tooling only)
+dashboard_ocr.txt
+docx_summary.txt
+ocr_results.txt
+pdf_summary.txt
+pdf_text_detailed.txt
+
 

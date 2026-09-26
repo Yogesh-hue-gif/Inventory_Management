@@ -1,11 +1,11 @@
 <!-- VIEW 5: SUPPLIERS DIRECTORY (Matching project_IVM.pdf Page 18) -->
 <section id="view-suppliers" class="page-view">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+  <div class="page-header" style="margin-bottom: 16px;">
     <div>
       <h2 style="font-size: 20px; font-weight: 700;">Suppliers</h2>
       <p style="color: #6b7280; font-size: 13px;">Manage your supplier database</p>
     </div>
-    <div style="display: flex; gap: 10px;">
+    <div class="page-header-actions">
       <button onclick="loadSuppliers()" class="btn btn-secondary">
         <i class="fa-solid fa-arrows-rotate"></i> Refresh
       </button>
@@ -45,10 +45,10 @@
     <div style="display: flex; align-items: center; gap: 16px; flex: 1; max-width: 600px;">
       <div style="position: relative; flex: 1;">
         <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
-        <input type="text" onkeyup="filterSuppliersDirectorySearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search by name, contact or address...">
+        <input type="text" id="supplier-directory-search" oninput="filterSuppliersDirectorySearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search by name, contact or address...">
       </div>
       <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151;">
-        <input type="checkbox" id="supp-dir-toggle-inactive" style="accent-color: #2563eb;">
+        <input type="checkbox" id="supp-dir-toggle-inactive" onchange="applySuppliersDirectoryFilters()" style="accent-color: #2563eb;">
         <label for="supp-dir-toggle-inactive">Show Inactive</label>
       </div>
     </div>

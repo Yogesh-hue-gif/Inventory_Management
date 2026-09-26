@@ -66,6 +66,11 @@
           <button type="button" id="pos-type-walkin" onclick="setPOSCustomerType('walkin')" class="btn-toggle active">Walk-In</button>
           <button type="button" id="pos-type-regular" onclick="setPOSCustomerType('regular')" class="btn-toggle">Regular</button>
         </div>
+        <input type="hidden" id="pos-quotation-ref-input" value="">
+        <div class="form-group">
+          <label class="form-label" style="color:#9ca3af;"><i class="fa-solid fa-user"></i> Customer name</label>
+          <input type="text" id="pos-customer-input" class="form-control" style="background:#1f2937; border-color:#374151; color:#fff;" value="Walk-in Customer" placeholder="Walk-in Customer">
+        </div>
         <button type="button" style="width: 100%; padding: 7px; background: #1f2937; border: 1px dashed #374151; color: #9ca3af; border-radius: 6px; font-size: 11px; margin-bottom: 16px; cursor: pointer;">
           <i class="fa-solid fa-user-secret"></i> Anonymous walk-in customer
         </button>
@@ -117,9 +122,16 @@
             ✓ Exact amount!
           </button>
         </div>
+        <div id="pos-success-alert-banner" style="display:none; align-items:center; gap:8px; margin-top:12px; padding:9px 10px; border-radius:6px; background:#d1fae5; border:1px solid #6ee7b7; color:#047857; font-size:11px; font-weight:600;">
+          <i class="fa-solid fa-circle-check"></i><span id="pos-success-alert-text"></span>
+        </div>
+        <div id="pos-last-bill-ref" style="display:none; margin-top:8px; color:#9ca3af; font-size:11px; text-align:center;"></div>
       </div>
 
       <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 16px;">
+        <button type="button" onclick="downloadPOSBill()" class="btn" style="background:#1f2937; border: 1px solid #374151; color: #ffffff; width: 100%; justify-content: center;">
+          <i class="fa-solid fa-download"></i> Download Bill
+        </button>
         <button type="button" onclick="printPOSBill()" class="btn" style="background: #1f2937; border: 1px solid #374151; color: #ffffff; width: 100%; justify-content: center;">
           <i class="fa-solid fa-print"></i> Print Bill
         </button>

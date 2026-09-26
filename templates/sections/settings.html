@@ -3,12 +3,12 @@
 
   <!-- SUB-VIEW 1: STAFF MANAGEMENT -->
   <div id="settings-tab-staff">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+    <div class="page-header" style="margin-bottom: 16px;">
       <div>
         <h2 style="font-size: 20px; font-weight: 700;">Staff Management</h2>
         <p style="color: #6b7280; font-size: 13px;">Manage your hardware store team members</p>
       </div>
-      <div style="display: flex; gap: 10px;">
+      <div class="page-header-actions">
         <button onclick="loadStaff()" class="btn btn-secondary">
           <i class="fa-solid fa-arrows-rotate"></i> Refresh
         </button>
@@ -22,12 +22,12 @@
     <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
       <div class="stat-card">
         <div class="stat-label">TOTAL STAFF</div>
-        <div id="staff-stat-total" class="stat-val">9</div>
+        <div id="staff-stat-total" class="stat-val">0</div>
         <div class="stat-icon-logo icon-blue"><i class="fa-solid fa-users"></i></div>
       </div>
       <div class="stat-card">
         <div class="stat-label">ACTIVE</div>
-        <div id="staff-stat-active" class="stat-val" style="color: var(--accent-emerald);">9</div>
+        <div id="staff-stat-active" class="stat-val" style="color: var(--accent-emerald);">0</div>
         <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-circle-check"></i></div>
       </div>
       <div class="stat-card">
@@ -47,10 +47,10 @@
       <div style="display: flex; align-items: center; gap: 16px; flex: 1; max-width: 600px;">
         <div style="position: relative; flex: 1;">
           <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
-          <input type="text" onkeyup="filterStaffSearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search by name, email, role...">
+          <input type="text" id="staff-search-input" oninput="applyStaffFilters()" class="form-control" style="padding-left: 32px;" placeholder="Search by name, email, role...">
         </div>
         <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151;">
-          <input type="checkbox" id="staff-toggle-inactive" style="accent-color: #2563eb;">
+          <input type="checkbox" id="staff-toggle-inactive" onchange="applyStaffFilters()" style="accent-color: #2563eb;">
           <label for="staff-toggle-inactive">Show Inactive</label>
         </div>
       </div>
@@ -79,12 +79,12 @@
 
   <!-- SUB-VIEW 2: LOOKUP / CATEGORIES -->
   <div id="settings-tab-categories" style="display: none;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+    <div class="page-header" style="margin-bottom: 16px;">
       <div>
         <h2 style="font-size: 20px; font-weight: 700;">Lookup / Categories</h2>
         <p style="color: #6b7280; font-size: 13px;">Manage product categories and lookup values</p>
       </div>
-      <div style="display: flex; gap: 10px;">
+      <div class="page-header-actions">
         <button onclick="loadCategories()" class="btn btn-secondary">
           <i class="fa-solid fa-arrows-rotate"></i> Refresh
         </button>
@@ -98,12 +98,12 @@
     <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
       <div class="stat-card">
         <div class="stat-label">TOTAL</div>
-        <div id="cat-stat-total" class="stat-val">11</div>
+        <div id="cat-stat-total" class="stat-val">0</div>
         <div class="stat-icon-logo icon-blue"><i class="fa-solid fa-list-check"></i></div>
       </div>
       <div class="stat-card">
         <div class="stat-label">ACTIVE</div>
-        <div id="cat-stat-active" class="stat-val" style="color: var(--accent-emerald);">11</div>
+        <div id="cat-stat-active" class="stat-val" style="color: var(--accent-emerald);">0</div>
         <div class="stat-icon-logo icon-emerald"><i class="fa-solid fa-circle-check"></i></div>
       </div>
       <div class="stat-card">
@@ -113,7 +113,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-label">SHOWING</div>
-        <div id="cat-stat-showing" class="stat-val">11</div>
+        <div id="cat-stat-showing" class="stat-val">0</div>
         <div class="stat-icon-logo icon-purple"><i class="fa-solid fa-bars-staggered"></i></div>
       </div>
     </div>
@@ -123,10 +123,10 @@
       <div style="display: flex; align-items: center; gap: 16px; flex: 1; max-width: 600px;">
         <div style="position: relative; flex: 1;">
           <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
-          <input type="text" onkeyup="filterCategoriesSearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search by name or description...">
+          <input type="text" id="cat-search-input" oninput="applyCategoryFilters()" class="form-control" style="padding-left: 32px;" placeholder="Search by name or description...">
         </div>
         <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; color: #374151;">
-          <input type="checkbox" id="cat-toggle-inactive" style="accent-color: #2563eb;">
+          <input type="checkbox" id="cat-toggle-inactive" onchange="applyCategoryFilters()" style="accent-color: #2563eb;">
           <label for="cat-toggle-inactive">Show Inactive</label>
         </div>
       </div>
@@ -153,12 +153,12 @@
 
   <!-- SUB-VIEW 3: REORDER MANAGEMENT -->
   <div id="settings-tab-reorder" style="display: none;">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+    <div class="page-header" style="margin-bottom: 16px;">
       <div>
         <h2 style="font-size: 20px; font-weight: 700;">Reorder Management</h2>
         <p style="color: #6b7280; font-size: 13px;">Select low-stock items and generate a supplier demand slip</p>
       </div>
-      <div style="display: flex; gap: 10px;">
+      <div class="page-header-actions">
         <button onclick="loadReorderItems()" class="btn btn-secondary">
           <i class="fa-solid fa-arrows-rotate"></i> Refresh
         </button>
@@ -173,7 +173,7 @@
     <div class="stats-grid" style="grid-template-columns: repeat(4, 1fr); margin-bottom: 16px;">
       <div class="stat-card">
         <div class="stat-label">TOTAL ISSUES</div>
-        <div id="reorder-stat-issues" class="stat-val" style="color: var(--accent-amber);">1</div>
+        <div id="reorder-stat-issues" class="stat-val" style="color: var(--accent-amber);">0</div>
         <div class="stat-icon-logo icon-amber"><i class="fa-solid fa-triangle-exclamation"></i></div>
       </div>
       <div class="stat-card">
@@ -183,7 +183,7 @@
       </div>
       <div class="stat-card">
         <div class="stat-label">OUT OF STOCK</div>
-        <div id="reorder-stat-out" class="stat-val" style="color: var(--accent-rose);">1</div>
+        <div id="reorder-stat-out" class="stat-val" style="color: var(--accent-rose);">0</div>
         <div class="stat-icon-logo icon-rose"><i class="fa-solid fa-ban"></i></div>
       </div>
       <div class="stat-card">
@@ -203,23 +203,23 @@
     <div class="card-box" style="margin-bottom: 16px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center;">
       <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 600px;">
         <div style="display: flex; gap: 6px;">
-          <button class="preset-btn active">All Issues 1</button>
-          <button class="preset-btn">Low Stock 0</button>
-          <button class="preset-btn">Out of Stock 1</button>
+          <button id="reorder-filter-all" data-reorder-filter="all" onclick="setReorderFilter('all')" class="preset-btn active">All Issues (0)</button>
+          <button id="reorder-filter-low" data-reorder-filter="low" onclick="setReorderFilter('low')" class="preset-btn">Low Stock (0)</button>
+          <button id="reorder-filter-out" data-reorder-filter="out" onclick="setReorderFilter('out')" class="preset-btn">Out of Stock (0)</button>
         </div>
         <div style="position: relative; flex: 1;">
           <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
-          <input type="text" class="form-control" style="padding-left: 32px;" placeholder="Search product, supplier, size...">
+          <input type="text" id="reorder-search-input" oninput="reorderSearch=this.value; applyReorderFilters()" class="form-control" style="padding-left: 32px;" placeholder="Search product, size, unit...">
         </div>
       </div>
-      <div style="font-size: 12px; color: #6b7280; font-weight: 600;">1 item</div>
+      <div id="reorder-count-label" style="font-size: 12px; color: #6b7280; font-weight: 600;">0 items</div>
     </div>
 
     <div class="table-container">
       <table class="data-table">
         <thead>
           <tr>
-            <th style="width: 40px;"><input type="checkbox" id="reorder-select-all"></th>
+            <th style="width: 40px;"><input type="checkbox" id="reorder-select-all" onchange="toggleAllReorder(this.checked)"></th>
             <th>PRODUCT / VARIANT</th>
             <th>CURRENT STOCK</th>
             <th>REORDER LVL</th>

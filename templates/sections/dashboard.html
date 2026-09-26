@@ -1,6 +1,6 @@
 <!-- VIEW 1: DASHBOARD (Matching project_IVM.pdf Page 1 & 2) -->
 <section id="view-dashboard" class="page-view active">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+  <div class="page-header" style="align-items: center; margin-bottom: 16px;">
     <div>
       <h2 style="font-size: 20px; font-weight: 700; color: #0f172a;">Dashboard</h2>
     </div>
@@ -109,7 +109,7 @@
   </div>
 
   <!-- Row A: SEPARATE Sales Trend Chart Card & SEPARATE Sales Trend Numerical Table Card -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+  <div class="resp-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
     <!-- Sales Trend Visual Chart Analysis Card -->
     <div class="card-box" style="padding: 0; overflow: hidden;">
       <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
@@ -149,7 +149,7 @@
   </div>
 
   <!-- Row B: SEPARATE Sales by Category Numerical Table & SEPARATE Sales by Category Progress Bars -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+  <div class="resp-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
     <!-- Sales by Category Numerical Summary Table Card -->
     <div class="card-box" style="padding: 0; overflow: hidden;">
       <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
@@ -189,8 +189,35 @@
     </div>
   </div>
 
+  <!-- Product Sales Leaderboard (ranked from recorded CustomerBillItem entries) -->
+  <div class="card-box" style="padding: 0; overflow: hidden; margin-bottom: 20px;">
+    <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; justify-content: space-between;">
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <i class="fa-solid fa-ranking-star"></i>
+        <span>Product Sales Leaderboard</span>
+      </div>
+      <span style="font-weight: 400; opacity: 0.8; font-size: 11px;">From recorded bill items</span>
+    </div>
+    <div style="padding: 12px; overflow-x: auto;">
+      <table class="data-table" style="font-size: 12px;">
+        <thead>
+          <tr>
+            <th style="background: #f1f5f9; color: #475569;">Rank</th>
+            <th style="background: #f1f5f9; color: #475569;">Product</th>
+            <th style="background: #f1f5f9; color: #475569;">Category</th>
+            <th style="background: #f1f5f9; color: #475569;">Units Sold</th>
+            <th style="background: #f1f5f9; color: #475569;">Revenue</th>
+            <th style="background: #f1f5f9; color: #475569;">Bills</th>
+            <th style="background: #f1f5f9; color: #475569;">Entries</th>
+          </tr>
+        </thead>
+        <tbody id="product-leaderboard-body"></tbody>
+      </table>
+    </div>
+  </div>
+
   <!-- Row C: Payment Methods & Inventory Health (with green/yellow/red stock variation line analysis) -->
-  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
+  <div class="resp-grid-2" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px;">
     <!-- Payment Methods Breakdown Card -->
     <div class="card-box" style="padding: 0; overflow: hidden;">
       <div style="background: #1e3a8a; color: #fff; padding: 10px 16px; font-weight: 700; font-size: 13px; display: flex; align-items: center; gap: 8px;">
@@ -274,7 +301,7 @@
       <span>Revenue Summary</span>
       <span style="font-weight: 400; opacity: 0.8; font-size: 11px;">Across time periods</span>
     </div>
-    <div style="padding: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
+    <div class="resp-grid-4" style="padding: 16px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px;">
       <!-- Today Card (Green Accent Line) -->
       <div style="background: #ffffff; border: 1px solid #e2e8f0; border-bottom: 4px solid #10b981; border-radius: 8px; padding: 14px; position: relative; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
         <div style="font-size: 11px; font-weight: 600; color: #64748b;">Today's Revenue</div>

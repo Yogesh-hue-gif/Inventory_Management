@@ -2,12 +2,12 @@
 <section id="view-supplier-bills" class="page-view">
   <!-- Main Supplier Bills View -->
   <div id="supplier-bills-main-container">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;">
+    <div class="page-header" style="margin-bottom: 16px;">
       <div>
         <h2 style="font-size: 20px; font-weight: 700;">Supplier Bills</h2>
         <p style="color: #6b7280; font-size: 13px;">Track payments & outstanding balances</p>
       </div>
-      <div>
+      <div class="page-header-actions">
         <button onclick="loadSupplierBills()" class="btn btn-secondary">
           <i class="fa-solid fa-arrows-rotate"></i> Refresh
         </button>
@@ -44,13 +44,13 @@
       <div style="display: flex; align-items: center; gap: 12px; flex: 1; max-width: 600px;">
         <div style="position: relative; flex: 1;">
           <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 10px; top: 10px; color: #9ca3af; font-size: 13px;"></i>
-          <input type="text" onkeyup="filterSupplierBillsSearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search supplier name...">
+          <input type="text" id="supplier-bills-search" oninput="filterSupplierBillsSearch(this.value)" class="form-control" style="padding-left: 32px;" placeholder="Search supplier name...">
         </div>
         <div style="display: flex; gap: 6px;">
-          <button onclick="filterSupplierBillsTab('all')" class="preset-btn active">All</button>
-          <button onclick="filterSupplierBillsTab('completed')" class="preset-btn">● Completed</button>
-          <button onclick="filterSupplierBillsTab('partial')" class="preset-btn">● Partial</button>
-          <button onclick="filterSupplierBillsTab('pending')" class="preset-btn">● Pending</button>
+          <button id="supplier-bill-filter-all" data-supplier-bill-filter="all" onclick="filterSupplierBillsTab('all')" class="preset-btn active">All</button>
+          <button id="supplier-bill-filter-completed" data-supplier-bill-filter="completed" onclick="filterSupplierBillsTab('completed')" class="preset-btn">● Completed</button>
+          <button id="supplier-bill-filter-partial" data-supplier-bill-filter="partial" onclick="filterSupplierBillsTab('partial')" class="preset-btn">● Partial</button>
+          <button id="supplier-bill-filter-pending" data-supplier-bill-filter="pending" onclick="filterSupplierBillsTab('pending')" class="preset-btn">● Pending</button>
         </div>
       </div>
       <div style="font-size: 12px; color: #6b7280; font-weight: 600;" id="supp-bills-count-label">5 suppliers</div>
